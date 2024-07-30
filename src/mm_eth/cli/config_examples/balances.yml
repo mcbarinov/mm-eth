@@ -1,0 +1,15 @@
+addresses: |
+  0x10fd602Bff689e64D4720D1DCCCD3494f1f16623
+  0x58487485c3858109f5A37e42546FE87473f79a4b
+  0x97C77B548aE0d4925F5C201220fC6d8996424309
+
+tokens: |
+  0x7EdF3b8579c21A8820b4C0B8352541c1CE04045f # USDT
+  0x6a55fe4884DE7E1d904BdC47A3BA092240ae9B39 # USDC
+
+nodes: |
+  https://arb1.arbitrum.io/rpc
+  https://rpc.arb1.arbitrum.gateway.fm
+  https://arbitrum-one.publicnode.com
+
+round_ndigits: 3

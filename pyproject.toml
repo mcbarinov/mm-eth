@@ -1,0 +1,82 @@
+[project]
+name = "mm-eth"
+version = "0.1.0"
+description = ""
+requires-python = ">=3.12"
+dependencies = [
+    "mm-std~=0.1.0",
+    "websocket-client~=1.8.0",
+    "web3~=6.20.0",
+    "typer~=0.12.0",
+    "loguru~=0.7.2",
+]
+[project.optional-dependencies]
+dev = [
+    "build~=1.2.1",
+    "twine~=5.1.0",
+    "pytest~=8.3.2",
+    "pytest-xdist~=3.6.1",
+    "pytest-httpserver~=1.0.8",
+    "coverage~=7.6.0",
+    "ruff~=0.5.2",
+    "pip-audit~=2.7.0",
+    "bandit~=1.7.7",
+    "mypy~=1.11.0",
+    "types-python-dateutil~=2.9.0",
+    "types-requests~=2.32.0.20240523",
+    "types-PyYAML~=6.0.12.12",
+]
+[project.scripts]
+mm-eth = "mm_eth.cli.cli:app"
+
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.setuptools.package-data]
+"*" = ["*.json", "*.yml", "*.toml"]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "stubs"
+warn_no_return = false
+implicit_reexport = true
+strict = true
+enable_error_code = ["truthy-bool", "possibly-undefined"]
+exclude = ["^tests/", "^tmp/"]
+[[tool.mypy.overrides]]
+module = ["rlp", "rlp.sedes"]
+ignore_missing_imports = true
+
+
+[tool.ruff]
+line-length = 130
+target-version = "py312"
+lint.select = [
+    "F", # Pyflakes
+    "E", "W", # pycodestyle
+    "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "A", # flake8-builtins
+    "COM", # flake8-commas
+    "C40", # flake8-comprehensions
+    "G", # flake8-logging-format
+    "PIE", # flake8-pie
+    "T20", # flake8-print
+    "RUF", # Ruff-specific rules
+]
+lint.ignore = [
+    "A003", # builtin-attribute-shadowing
+    "B008", # function-call-argument-default
+    "UP040", # non-pep695-type-alias
+    "COM812"
+]
+
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B311"]

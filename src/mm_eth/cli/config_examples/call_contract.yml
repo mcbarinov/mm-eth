@@ -1,0 +1,5 @@
+contract_address: "0xBa985cad26658EB00eA42aCc7516aed52e7a8AcC"
+function_signature: balanceOf(address)
+function_args: "['0x83aC43147BA5dAA5abc4ccEA84F2B8000bA82f26']"
+outputs_types: uint256 # optional
+node: https://rpc.eth.gateway.fm
