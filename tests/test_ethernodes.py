@@ -1,5 +1,6 @@
-from mm_eth import ethernodes
 from mm_std import random_choice
+
+from mm_eth import ethernodes
 
 
 def test_search_nodes(mm_proxies):

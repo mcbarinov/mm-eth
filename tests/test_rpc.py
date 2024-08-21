@@ -1,4 +1,5 @@
 import pytest
+
 from mm_eth import rpc, tx
 
 pytestmark = pytest.mark.infura

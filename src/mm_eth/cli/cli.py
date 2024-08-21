@@ -26,6 +26,10 @@ from mm_eth.cli.cmd import (
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_enable=False, add_completion=False)
 
+wallet_app = typer.Typer(no_args_is_help=True, help="Wallet commands: generate mnemonic, private to address")
+app.add_typer(wallet_app, name="wallet")
+app.add_typer(wallet_app, name="w", hidden=True)
+
 
 class ConfigExample(str, Enum):
     TRANSFER_ETH = "transfer-eth"
@@ -62,7 +66,7 @@ def node_command(
     node_cmd.run(urls, print_format, proxy)
 
 
-@app.command(name="mnemonic", help="Generate eth accounts based on a mnemonic")
+@wallet_app.command(name="mnemonic", help="Generate eth accounts based on a mnemonic")
 def mnemonic_command(  # nosec
     mnemonic: Annotated[str, typer.Option("--mnemonic", "-m")] = "",
     passphrase: Annotated[str, typer.Option("--passphrase", "-pass")] = "",
@@ -81,7 +85,7 @@ def mnemonic_command(  # nosec
     )
 
 
-@app.command(name="private-key", help="Print an address for a private key")
+@wallet_app.command(name="private-key", help="Print an address for a private key")
 def private_key_command(private_key: str) -> None:
     private_key_cmd.run(private_key)
 

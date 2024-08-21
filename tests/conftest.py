@@ -1,9 +1,10 @@
 import json
 
 import pytest
-from mm_eth.anvil import Anvil
 from mm_std import Err, get_dotenv
 from web3.types import ABI
+
+from mm_eth.anvil import Anvil
 
 
 @pytest.fixture()

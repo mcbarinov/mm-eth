@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 import pytest
+
 from mm_eth import utils
 
 
