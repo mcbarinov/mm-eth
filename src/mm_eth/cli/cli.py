@@ -61,7 +61,7 @@ def token_command(
 def node_command(
     urls: Annotated[list[str], typer.Argument()],
     print_format: Annotated[PrintFormat, typer.Option("--format", "-f", help="Print format")] = PrintFormat.TABLE,
-    proxy: Annotated[str, typer.Option("--proxy", "-p", help="Proxy")] = "",
+    proxy: Annotated[str | None, typer.Option("--proxy", "-p", help="Proxy")] = None,
 ) -> None:
     node_cmd.run(urls, print_format, proxy)
 

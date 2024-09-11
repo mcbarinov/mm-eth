@@ -1,8 +1,8 @@
 import json
 
 import pytest
+from eth_typing import ABI
 from mm_std import Err, get_dotenv
-from web3.types import ABI
 
 from mm_eth.anvil import Anvil
 

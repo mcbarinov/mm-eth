@@ -7,7 +7,7 @@ from eth_keys import KeyAPI
 from eth_typing import ChecksumAddress
 from eth_utils import decode_hex
 
-Account.enable_unaudited_hdwallet_features()  # type: ignore[no-untyped-call]
+Account.enable_unaudited_hdwallet_features()
 
 key_api = KeyAPI()
 
@@ -24,7 +24,7 @@ def to_checksum_address(address: str) -> ChecksumAddress:
 
 
 def generate_mnemonic(num_words: int = 24) -> str:
-    mnemonic = Mnemonic("english")  # type: ignore[no-untyped-call]
+    mnemonic = Mnemonic("english")
     return mnemonic.generate(num_words=num_words)
 
 
@@ -38,13 +38,15 @@ def generate_accounts(  # nosec
     for i in range(limit):
         path = f"{path_prefix}/{i}"
         acc = Account.from_mnemonic(mnemonic=mnemonic, account_path=path, passphrase=passphrase)
-        result.append(NewAccount(path, acc.address, acc.key.hex()))
+        private_key = acc.key.hex().lower()
+        if not private_key.startswith("0x"):
+            private_key = f"0x{private_key}"
+        result.append(NewAccount(path, acc.address, private_key))
     return result
 
 
 def private_to_address(private_key: str) -> str | None:
     """returns address in lower case"""
-    # noinspection PyBroadException
     try:
         return key_api.PrivateKey(decode_hex(private_key)).public_key.to_address().lower()
     except Exception:
@@ -62,7 +64,6 @@ def create_private_keys_dict(private_keys: list[str]) -> dict[str, str]:  # addr
 
 
 def is_private_key(private_key: str) -> bool:
-    # noinspection PyBroadException
     try:
         key_api.PrivateKey(decode_hex(private_key)).public_key.to_address()
         return True

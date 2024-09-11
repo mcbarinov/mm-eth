@@ -243,3 +243,7 @@ def random_node(nodes: Nodes, remove_slash: bool = True) -> str:
 
 def random_proxy(proxies: Proxies) -> str | None:
     return random_str_choice(proxies)
+
+
+def to_hex(data: bytes | int | bool) -> str:
+    return Web3.to_hex(data)

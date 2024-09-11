@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import rlp
-from eth_utils import keccak
+from eth_utils import keccak, to_hex
 from pydantic import BaseModel
 from rlp.sedes import Binary, big_endian_int, binary
 from web3 import Web3
@@ -105,7 +105,7 @@ def sign_legacy_tx(
         tx["data"] = data
 
     signed = w3.eth.account.sign_transaction(tx, private_key)
-    return SignedTx(tx_hash=signed.hash.hex(), raw_tx=signed.rawTransaction.hex())
+    return SignedTx(tx_hash=to_hex(signed.hash), raw_tx=to_hex(signed.raw_transaction))
 
 
 def sign_tx(
@@ -136,7 +136,7 @@ def sign_tx(
         tx["to"] = Web3.to_checksum_address(to)
 
     signed = w3.eth.account.sign_transaction(tx, private_key)
-    return SignedTx(tx_hash=signed.hash.hex(), raw_tx=signed.rawTransaction.hex())
+    return SignedTx(tx_hash=signed.hash.hex(), raw_tx=signed.raw_transaction.hex())
 
 
 def decode_raw_tx(raw_tx: str) -> DecodedRawTx:

@@ -2,12 +2,12 @@ import json
 import pkgutil
 from typing import cast
 
-from eth_typing import ChecksumAddress, HexStr
+from eth_typing import ABI, ChecksumAddress, HexStr
 from hexbytes import HexBytes
 from mm_std import Err, Ok, Result
 from pydantic import BaseModel, Field
 from web3 import Web3
-from web3.types import ABI, Nonce, TxParams, Wei
+from web3.types import Nonce, TxParams, Wei
 
 from mm_eth import abi, rpc
 from mm_eth.rpc import rpc_call

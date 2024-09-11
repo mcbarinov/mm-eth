@@ -1,3 +1,5 @@
+set dotenv-load
+
 version := `uv run python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])'`
 
 
@@ -27,6 +29,9 @@ publish: build
     uvx twine upload dist/**
     git tag -a 'v{{version}}' -m 'v{{version}}'
     git push origin v{{version}}
+
+sync:
+    uv sync
 
 anvil:
     anvil -m "$MNEMONIC"

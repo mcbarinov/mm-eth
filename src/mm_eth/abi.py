@@ -6,11 +6,10 @@ from typing import Any, cast
 import eth_abi
 import eth_utils
 import pydash
-from eth_typing import HexStr
+from eth_typing import ABI, ABIFunction, HexStr
 from pydantic import BaseModel
 from web3 import Web3
 from web3.auto import w3
-from web3.types import ABI, ABIFunction
 
 from mm_eth.utils import hex_to_bytes
 
@@ -85,7 +84,7 @@ def encode_function_input_by_abi(abi: ABI | ABIFunction, fn_name: str, args: lis
         else:
             processed_args.append(args[idx])
 
-    return Web3().eth.contract(abi=[abi]).encodeABI(fn_name=fn_name, args=processed_args)  # type: ignore[no-any-return]
+    return Web3().eth.contract(abi=[abi]).encode_abi(abi_element_identifier=fn_name, args=processed_args)  # type: ignore[no-any-return]
 
 
 def encode_function_input_by_signature(func_signature: str, args: list[Any]) -> HexStr:
@@ -100,7 +99,7 @@ def encode_function_input_by_signature(func_signature: str, args: list[Any]) -> 
     func_abi: ABIFunction = {
         "name": func_name,
         "type": "function",
-        "inputs": [{"type": t} for t in arg_types],
+        "inputs": [{"type": t} for t in arg_types],  # type: ignore[typeddict-item]
     }
     return encode_function_input_by_abi(func_abi, func_name, args)
 
@@ -123,8 +122,8 @@ def parse_function_signatures(contract_abi: ABI) -> dict[str, str]:
     result: dict[str, str] = {}
     for item in contract_abi:
         if item.get("type", None) == "function":
-            function_name = item["name"]
-            types = ",".join([i["type"] for i in item["inputs"]])
+            function_name = item["name"]  # type: ignore
+            types = ",".join([i["type"] for i in item["inputs"]])  # type: ignore
             function_name_and_types = f"{function_name}({types})"
             result[function_name_and_types] = encode_function_signature(function_name_and_types)
     return result
