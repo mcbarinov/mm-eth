@@ -1,10 +1,9 @@
 set dotenv-load
-
 version := `uv run python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])'`
 
 
 clean:
-    rm -rf .pytest_cache .mypy_cache .ruff_cache .coverage dist build *.egg-info
+    rm -rf .pytest_cache .mypy_cache .ruff_cache .coverage dist build src/*.egg-info
 
 build: clean lint audit test
     uvx --from build pyproject-build --installer uv
