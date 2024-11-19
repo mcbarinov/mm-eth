@@ -6,14 +6,14 @@ clean:
     rm -rf .pytest_cache .mypy_cache .ruff_cache .coverage dist build src/*.egg-info
 
 build: clean lint audit test
-    uvx --from build pyproject-build --installer uv
+    uv build
 
 format:
     uv run ruff check --select I --fix src tests
     uv run ruff format src tests
 
 test:
-    uv run coverage run -m pytest -n auto tests
+    uv run pytest -n auto tests
 
 lint: format
     uv run ruff check src tests

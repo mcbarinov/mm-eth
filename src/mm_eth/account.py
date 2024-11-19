@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import eth_utils
 from eth_account import Account
 from eth_account.hdaccount import Mnemonic
+from eth_account.types import Language
 from eth_keys import KeyAPI
 from eth_typing import ChecksumAddress
 from eth_utils import decode_hex
@@ -24,7 +25,7 @@ def to_checksum_address(address: str) -> ChecksumAddress:
 
 
 def generate_mnemonic(num_words: int = 24) -> str:
-    mnemonic = Mnemonic("english")
+    mnemonic = Mnemonic(Language.ENGLISH)
     return mnemonic.generate(num_words=num_words)
 
 
