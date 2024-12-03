@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from typing import TypeAlias
 
-Proxies: TypeAlias = str | Sequence[str] | None
-Nodes: TypeAlias = str | Sequence[str]
+type Proxies = str | Sequence[str] | None
+type Nodes = str | Sequence[str]

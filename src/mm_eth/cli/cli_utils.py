@@ -1,7 +1,6 @@
 import sys
 import time
 from pathlib import Path
-from typing import TypeVar
 
 import eth_utils
 import yaml
@@ -14,6 +13,8 @@ from rich.table import Table
 from mm_eth import account, rpc
 from mm_eth.account import is_private_key
 from mm_eth.cli import calcs
+
+# from typing import TypeVar
 
 
 class BaseConfig(BaseModel):
@@ -44,10 +45,7 @@ def delay(value: str | None) -> None:
     time.sleep(float(calcs.calc_decimal_value(value)))
 
 
-T = TypeVar("T")
-
-
-def read_config(config_cls: type[T], config_path: str) -> T:
+def read_config[T](config_cls: type[T], config_path: str) -> T:
     try:
         with open(config_path) as f:
             config = config_cls(**yaml.full_load(f))

@@ -1,14 +1,14 @@
 [project]
 name = "mm-eth"
-version = "0.1.4"
+version = "0.1.5"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
-    "mm-std~=0.1.6",
+    "mm-std~=0.1.8",
     "websocket-client~=1.8.0",
-    "web3~=7.5.0",
+    "web3~=7.6.0",
     "loguru~=0.7.2",
-    "typer>=0.13.0",
+    "typer>=0.14.0",
 
 ]
 [project.scripts]
@@ -20,17 +20,17 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = [
-    "pytest~=8.3.3",
+    "pytest~=8.3.4",
     "pytest-xdist~=3.6.1",
-    "ruff~=0.7.4",
+    "ruff~=0.8.1",
     "pip-audit~=2.7.3",
-    "bandit~=1.7.10",
+    "bandit~=1.8.0",
     "mypy~=1.13.0",
     "types-PyYAML~=6.0.12.20240917",
 ]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 mypy_path = "stubs"
 warn_no_return = false
 implicit_reexport = true
@@ -43,7 +43,7 @@ ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 130
-target-version = "py312"
+target-version = "py313"
 lint.select = [
     "F", # Pyflakes
     "E", "W", # pycodestyle
@@ -60,7 +60,6 @@ lint.select = [
 lint.ignore = [
     "A003", # builtin-attribute-shadowing
     "B008", # function-call-argument-default
-    "UP040", # non-pep695-type-alias
     "COM812"
 ]
 
