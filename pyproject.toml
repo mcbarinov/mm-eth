@@ -4,11 +4,11 @@ version = "0.1.5"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
-    "mm-std~=0.1.8",
+    "mm-std~=0.1.9",
     "websocket-client~=1.8.0",
-    "web3~=7.6.0",
-    "loguru~=0.7.2",
-    "typer>=0.14.0",
+    "web3~=7.6.1",
+    "loguru~=0.7.3",
+    "typer>=0.15.1",
 
 ]
 [project.scripts]
@@ -22,11 +22,11 @@ build-backend = "hatchling.build"
 dev-dependencies = [
     "pytest~=8.3.4",
     "pytest-xdist~=3.6.1",
-    "ruff~=0.8.1",
+    "ruff~=0.8.4",
     "pip-audit~=2.7.3",
     "bandit~=1.8.0",
-    "mypy~=1.13.0",
-    "types-PyYAML~=6.0.12.20240917",
+    "mypy~=1.14.0",
+    "types-PyYAML~=6.0.12.20241221",
 ]
 
 [tool.mypy]

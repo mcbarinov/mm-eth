@@ -14,8 +14,6 @@ from mm_eth import account, rpc
 from mm_eth.account import is_private_key
 from mm_eth.cli import calcs
 
-# from typing import TypeVar
-
 
 class BaseConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
