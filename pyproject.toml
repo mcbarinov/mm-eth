@@ -1,19 +1,14 @@
 [project]
 name = "mm-eth"
-version = "0.1.5"
+version = "0.2.0"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
     "mm-std~=0.1.9",
     "websocket-client~=1.8.0",
     "web3~=7.6.1",
-    "loguru~=0.7.3",
-    "typer>=0.15.1",
 
 ]
-[project.scripts]
-mm-eth = "mm_eth.cli.cli:app"
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
