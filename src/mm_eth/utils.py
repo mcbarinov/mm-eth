@@ -16,23 +16,22 @@ from mm_eth.types import Nodes, Proxies
 
 
 def parse_addresses(data: str) -> list[str]:
-    data = data.lower()
     result = []
-    for word in data.split():
+    for word in data.lower().split():
         if len(word) == 42 and re.match("0x[a-f0-9]{40}", word):
-            result.append(word)
+            result.append(word)  # noqa: PERF401
     return pydash.uniq(result)
 
 
 def to_token_wei(value: str | int, decimals: int) -> int:
     if isinstance(value, int):
         return value
-    elif isinstance(value, str):
+    if isinstance(value, str):
         value = value.lower().replace(" ", "").strip()
         if value.endswith("t"):
             value = value.replace("t", "")
             return int(Decimal(value) * 10**decimals)
-        elif value.isdigit():
+        if value.isdigit():
             return int(value)
 
     raise ValueError("wrong value" + value)
@@ -41,11 +40,11 @@ def to_token_wei(value: str | int, decimals: int) -> int:
 def to_wei(value: str | int | Decimal, decimals: int | None = None) -> Wei:
     if isinstance(value, int):
         return Wei(value)
-    elif isinstance(value, Decimal):
+    if isinstance(value, Decimal):
         if value != value.to_integral_value():
             raise ValueError(f"value must be integral number: {value}")
         return Wei(int(value))
-    elif isinstance(value, str):
+    if isinstance(value, str):
         value = value.lower().replace(" ", "").strip()
         if value.endswith("navax"):  # https://snowtrace.io/unitconverter
             value = value.replace("navax", "")
@@ -68,8 +67,7 @@ def to_wei(value: str | int | Decimal, decimals: int | None = None) -> Wei:
             return Wei(int(value))
         raise ValueError("wrong value " + value)
 
-    else:
-        raise ValueError(f"value has a wrong type: {type(value)}")
+    raise ValueError(f"value has a wrong type: {type(value)}")
 
 
 def from_wei(
@@ -125,11 +123,11 @@ def from_token_wei_str(value: int, decimals: int, symbol: str = "", round_ndigit
 def to_wei_token(value: str | int | Decimal, symbol: str, decimals: int) -> int:
     if isinstance(value, int):
         return value
-    elif isinstance(value, Decimal):
+    if isinstance(value, Decimal):
         if value != value.to_integral_value():
             raise ValueError(f"value must be integral number: {value}")
         return int(value)
-    elif isinstance(value, str):
+    if isinstance(value, str):
         value = value.lower().replace(" ", "").strip()
         if value.isdigit():
             return int(value)
@@ -138,7 +136,7 @@ def to_wei_token(value: str | int | Decimal, symbol: str, decimals: int) -> int:
         except Exception as e:
             raise ValueError from e
     else:
-        raise ValueError(f"value has a wrong type: {type(value)}")
+        raise TypeError(f"value has a wrong type: {type(value)}")
 
 
 def to_checksum_address(address: str) -> str:
@@ -185,10 +183,7 @@ def truncate_hex_str(hex_str: str, digits: int = 4, replace_str: str = "...") ->
 
 
 def log_topic_to_address(topic: HexBytes | str) -> str:
-    if isinstance(topic, HexBytes):
-        result = topic.hex()[-40:]
-    else:
-        result = topic[-40:]
+    result = topic.hex()[-40:] if isinstance(topic, HexBytes) else topic[-40:]
     if not result.startswith("0x"):
         result = f"0x{result}"
     return result

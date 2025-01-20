@@ -44,14 +44,12 @@ class RPLTransaction(rlp.Serializable):  # type: ignore[misc]
         to: str | None = None,
     ) -> RPLTransaction:
         if to:
-            to = hex_to_bytes(to)  # type:ignore
+            to = hex_to_bytes(to)  # type: ignore[assignment]
         if data:
-            data = hex_to_bytes(data)  # type:ignore
+            data = hex_to_bytes(data)  # type: ignore[assignment]
         if not value:
             value = 0
-        r = int(r, 16)  # type:ignore
-        s = int(s, 16)  # type:ignore
-        return RPLTransaction(nonce, gas_price, gas, to, value, data, v, r, s)
+        return RPLTransaction(nonce, gas_price, gas, to, value, data, v, int(r, 16), int(s, 16))
 
 
 class DecodedRawTx(BaseModel):

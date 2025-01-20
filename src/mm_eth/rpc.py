@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import websocket
 from mm_std import Err, Ok, Result, hr, random_choice
 from pydantic import BaseModel
-from web3.types import BlockIdentifier
 
-from mm_eth.types import Nodes, Proxies
 from mm_eth.utils import hex_str_to_int, random_node, random_proxy
+
+if TYPE_CHECKING:
+    from web3.types import BlockIdentifier
+
+    from mm_eth.types import Nodes, Proxies
 
 
 @dataclass
@@ -85,10 +88,7 @@ def rpc_call(
     res: Result[Any] = Err("not started yet")
     for _ in range(attempts):
         node = random_node(nodes)
-        if node.startswith("http"):
-            res = _http_call(node, data, timeout, random_proxy(proxies))
-        else:
-            res = _ws_call(node, data, timeout)
+        res = _http_call(node, data, timeout, random_proxy(proxies)) if node.startswith("http") else _ws_call(node, data, timeout)
         if isinstance(res, Ok):
             return res
     return res
@@ -444,7 +444,7 @@ def eth_syncing(rpc_urls: Nodes, timeout: int = 10, proxies: Proxies = None, att
                 result[k] = int(v, 16)
             else:
                 result[k] = v
-        if result.get("currentBlock", None) and result.get("highestBlock", None):
+        if result.get("currentBlock") and result.get("highestBlock"):
             result["remaining"] = result["highestBlock"] - result["currentBlock"]
         return Ok(result, res.data)
 
