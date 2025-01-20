@@ -64,7 +64,7 @@ def decode_function_input(contract_abi: ABI, tx_input: str) -> FunctionInput:
 
 
 def get_function_abi(contr_abi: ABI, fn_name: str) -> ABIFunction:
-    abi = pydash.find(contr_abi, lambda x: x.get("name", None) == fn_name and x.get("type", None) == "function")  # type:ignore
+    abi = pydash.find(contr_abi, lambda x: x.get("name", None) == fn_name and x.get("type", None) == "function")  # type: ignore[call-overload, attr-defined]
     if not abi:
         raise ValueError("can't find abi for function: " + fn_name)
     return cast(ABIFunction, abi)
@@ -122,8 +122,8 @@ def parse_function_signatures(contract_abi: ABI) -> dict[str, str]:
     result: dict[str, str] = {}
     for item in contract_abi:
         if item.get("type", None) == "function":
-            function_name = item["name"]  # type: ignore
-            types = ",".join([i["type"] for i in item["inputs"]])  # type: ignore
+            function_name = item["name"]  # type: ignore[typeddict-item]
+            types = ",".join([i["type"] for i in item["inputs"]])  # type: ignore[typeddict-item]
             function_name_and_types = f"{function_name}({types})"
             result[function_name_and_types] = encode_function_signature(function_name_and_types)
     return result

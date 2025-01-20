@@ -1,4 +1,3 @@
-import os.path
 import random
 import shutil
 from dataclasses import dataclass
@@ -15,9 +14,9 @@ class SolcResult:
 
 def solc(contract_name: str, contract_path: str, tmp_dir: str) -> Result[SolcResult]:
     if tmp_dir.startswith("~"):
-        tmp_dir = os.path.expanduser(tmp_dir)
+        tmp_dir = Path(tmp_dir).expanduser().as_posix()
     if contract_path.startswith("~"):
-        contract_path = os.path.expanduser(contract_path)
+        contract_path = Path(contract_path).expanduser().as_posix()
     work_dir = f"{tmp_dir}/solc_{contract_name}_{random.randint(0, 100_000_000)}"
     abi_path = f"{work_dir}/{contract_name}.abi"
     bin_path = f"{work_dir}/{contract_name}.bin"

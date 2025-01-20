@@ -67,6 +67,6 @@ def create_private_keys_dict(private_keys: list[str]) -> dict[str, str]:  # addr
 def is_private_key(private_key: str) -> bool:
     try:
         key_api.PrivateKey(decode_hex(private_key)).public_key.to_address()
-        return True
+        return True  # noqa: TRY300
     except Exception:
         return False

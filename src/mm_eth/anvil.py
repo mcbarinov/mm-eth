@@ -10,7 +10,7 @@ from mm_eth import account, rpc
 
 
 class Anvil:
-    def __init__(self, *, chain_id: int, port: int, mnemonic: str):
+    def __init__(self, *, chain_id: int, port: int, mnemonic: str) -> None:
         self.chain_id = chain_id
         self.port = port
         self.mnemonic = mnemonic
@@ -18,7 +18,7 @@ class Anvil:
 
     def start_process(self) -> None:
         cmd = f"anvil -m '{self.mnemonic}' -p {self.port} --chain-id {self.chain_id}"
-        self.process = Popen(cmd, shell=True)  # nosec
+        self.process = Popen(cmd, shell=True)  # noqa: S602 # nosec
         time.sleep(3)
 
     def stop(self) -> None:
