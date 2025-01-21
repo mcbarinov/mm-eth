@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Self
 
 from loguru import logger
-from mm_std import BaseConfig, Err, Ok, print_json, str_to_list, utc_now
+from mm_std import BaseConfig, Err, Ok, str_to_list, utc_now
 from pydantic import Field, StrictStr, field_validator, model_validator
 
 from mm_eth import rpc
@@ -128,10 +128,8 @@ def run(
     no_receipt: bool,
     emulate: bool,
 ) -> None:
-    config = cli_utils.read_config(Config, Path(config_path))
-    if print_config:
-        print_json(config.model_dump(exclude={"private_key", "addresses_map"}))
-        sys.exit(0)
+    config = Config.read_config_or_exit(config_path)
+    cli_utils.print_config_and_exit(print_config, config, {"private_key", "addresses_map"})
 
     cli_utils.init_logger(debug, config.log_debug, config.log_info)
     rpc_helpers.check_nodes_for_chain_id(config.nodes, config.chain_id)

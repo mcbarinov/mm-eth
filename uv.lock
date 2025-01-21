@@ -730,7 +730,7 @@ wheels = [
 
 [[package]]
 name = "mm-eth"
-version = "0.2.1"
+version = "0.2.2"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
@@ -754,7 +754,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "loguru", specifier = "~=0.7.3" },
-    { name = "mm-std", specifier = "~=0.1.11" },
+    { name = "mm-std", specifier = "~=0.1.12" },
     { name = "typer", specifier = ">=0.15.1" },
     { name = "web3", specifier = "~=7.7.0" },
     { name = "websocket-client", specifier = "~=1.8.0" },
@@ -773,7 +773,7 @@ dev = [
 
 [[package]]
 name = "mm-std"
-version = "0.1.11"
+version = "0.1.12"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -785,7 +785,7 @@ dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/44/9b5b90015a3aa2906f1eb15a4d4404635f6b05e43c5023b770bd4c7d7774/mm_std-0.1.11-py3-none-any.whl", hash = "sha256:3ea736ccb313bf6d0c37272104ba1f79deb0874c07bd6091d504fcf9e703cdfe", size = 14444 },
+    { url = "https://files.pythonhosted.org/packages/ca/18/ea37b98761b2d39ff2d45e985e4ef5eedae08a421cee3ee19088a9c0da03/mm_std-0.1.12-py3-none-any.whl", hash = "sha256:2e3d3ed745755096cecf9690ca2fb772abed1a4064935717ce3c8824b7cabd83", size = 14699 },
 ]
 
 [[package]]

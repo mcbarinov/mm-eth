@@ -1,8 +1,6 @@
-import sys
 from dataclasses import dataclass
-from pathlib import Path
 
-from mm_std import BaseConfig, Err, Ok, fatal, print_json
+from mm_std import BaseConfig, Err, Ok, fatal
 from pydantic import Field, field_validator
 from rich.live import Live
 from rich.table import Table
@@ -37,10 +35,8 @@ class Token:
 
 
 def run(config_path: str, print_config: bool, wei: bool, show_nonce: bool) -> None:
-    config = cli_utils.read_config(Config, Path(config_path))
-    if print_config:
-        print_json(config.model_dump())
-        sys.exit(0)
+    config = Config.read_config_or_exit(config_path)
+    cli_utils.print_config_and_exit(print_config, config)
 
     tokens = _get_tokens_info(config)
 

@@ -96,10 +96,7 @@ def load_private_keys_from_file(private_keys_file: str) -> list[str]:
     return [line for line in lines if is_private_key(line)]
 
 
-def read_config[T: BaseConfig](config_type: type[T], config_path: Path) -> T:
-    res = config_type.read_config(config_path)
-    if res.is_ok():
-        return res.unwrap()
-
-    print_json(res.err)
-    sys.exit(1)
+def print_config_and_exit(exit_: bool, config: BaseConfig, exclude: set[str] | None = None) -> None:
+    if exit_:
+        print_json(config.model_dump(exclude=exclude))
+        sys.exit(0)

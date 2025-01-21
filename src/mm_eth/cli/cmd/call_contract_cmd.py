@@ -1,9 +1,7 @@
 import json
-import sys
 from logging import fatal
-from pathlib import Path
 
-from mm_std import BaseConfig, Err, print_json, print_plain
+from mm_std import BaseConfig, Err, print_plain
 from pydantic import StrictStr
 
 from mm_eth import abi, rpc
@@ -19,10 +17,8 @@ class Config(BaseConfig):
 
 
 def run(config_path: str, print_config: bool) -> None:
-    config = cli_utils.read_config(Config, Path(config_path))
-    if print_config:
-        print_json(config.model_dump())
-        sys.exit(0)
+    config = Config.read_config_or_exit(config_path)
+    cli_utils.print_config_and_exit(print_config, config)
 
     input_data = abi.encode_function_input_by_signature(
         config.function_signature,

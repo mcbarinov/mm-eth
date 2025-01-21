@@ -1,8 +1,5 @@
-import sys
-from pathlib import Path
-
 import yaml
-from mm_std import BaseConfig, fatal, print_json
+from mm_std import BaseConfig, fatal
 from pydantic import StrictStr
 
 from mm_eth import account, deploy
@@ -24,10 +21,8 @@ class Config(BaseConfig):
 
 
 def run(config_path: str, *, print_config: bool) -> None:
-    config = cli_utils.read_config(Config, Path(config_path))
-    if print_config:
-        print_json(config.model_dump(exclude={"private_key"}))
-        sys.exit(0)
+    config = Config.read_config_or_exit(config_path)
+    cli_utils.print_config_and_exit(print_config, config, {"private_key"})
 
     constructor_types = yaml.full_load(config.constructor_types)
     constructor_values = yaml.full_load(config.constructor_values)
