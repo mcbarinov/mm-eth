@@ -1,0 +1,26 @@
+token: "0x60631C856303731BE4deb81C0303F80B652aA5b4" # USDC
+decimals: 6
+max_fee_per_gas: 1.2base + 1gwei + random(1,200) # supported var_name=base
+max_fee_per_gas_limit: 10.1gwei - random(1,10) # optional
+max_priority_fee_per_gas: 1gwei + random(1,12)
+gas: estimate + random(100,200) - 19 # supported var_name=estimate
+value: 0.5balance - random(1.5t,3t) + 11gwei # supported var_name=balance
+value_min_limit: 0.5t + random(1,2) - 7
+addresses_map: |
+  0x10fd602Bff689e64D4720D1DCCCD3494f1f16623 0x58487485c3858109f5A37e42546FE87473f79a4b
+  0x97C77B548aE0d4925F5C201220fC6d8996424309 0x7EdF3b8579c21A8820b4C0B8352541c1CE04045f # can comment here
+  # and here
+addresses_from_file: ~/path/from.txt
+addresses_to_file: ~/path/to.txt
+delay: random(1.123,10) + 1 # secs, optional
+private_keys: | # optional, private_keys or private_keys_file must be used
+  0x7bb5b9c0ba991275f84b796b4d25fd3a8d7320911f50fade85410e7a2b000632
+  0xb7e0b671e176b04ceb0897a698d34771bfe9acf29273dc52a141be6e97145a00
+private_keys_file: ~/path/private_keys.txt # optional, private_keys or private_keys_file must be used
+log_debug: /path/to/file_debug.log # optional
+log_info: /path/to/file_info.log # optional
+round_ndigits: 6 # optional, default=5
+chain_id: 421613
+nodes: |
+  https://arbitrum-goerli.publicnode.com
+  https://rpc.goerli.arbitrum.gateway.fm
