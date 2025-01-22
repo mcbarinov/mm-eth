@@ -35,22 +35,18 @@ class Config(BaseConfig):
     log_info: str | None = None
 
     @field_validator("log_debug", "log_info", mode="before")
-    @classmethod
     def log_validator(cls, v: str | None) -> str | None:
         return validators.log_validator(v)
 
     @field_validator("nodes", "from_addresses", mode="before")
-    @classmethod
     def list_validator(cls, v: str | list[str] | None) -> list[str]:
         return validators.nodes_validator(v)
 
     @field_validator("from_addresses", mode="before")
-    @classmethod
     def from_addresses_validator(cls, v: str | list[str] | None) -> list[str]:
         return str_to_list(v, remove_comments=True, lower=True)
 
     @field_validator("private_keys", mode="before")
-    @classmethod
     def private_keys_validator(cls, v: str | list[str] | None) -> dict[str, str]:
         if v is None:
             return {}

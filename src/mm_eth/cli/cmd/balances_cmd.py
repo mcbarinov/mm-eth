@@ -17,12 +17,10 @@ class Config(BaseConfig):
     round_ndigits: int = 5
 
     @field_validator("nodes", mode="before")
-    @classmethod
     def nodes_validator(cls, v: str | list[str] | None) -> list[str]:
         return validators.nodes_validator(v)
 
     @field_validator("tokens", "addresses", mode="before")
-    @classmethod
     def addresses_validator(cls, v: str | list[str] | None) -> list[str]:
         return validators.addresses_validator(v)
 

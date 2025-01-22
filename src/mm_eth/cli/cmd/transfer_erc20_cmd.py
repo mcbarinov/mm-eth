@@ -44,17 +44,14 @@ class Config(BaseConfig):
         return [tx.from_address for tx in self.txs]
 
     @field_validator("log_debug", "log_info", mode="before")
-    @classmethod
     def log_validator(cls, v: str | None) -> str | None:
         return validators.log_validator(v)
 
     @field_validator("nodes", mode="before")
-    @classmethod
     def nodes_validator(cls, v: str | list[str] | None) -> list[str]:
         return validators.nodes_validator(v)
 
     @field_validator("private_keys", mode="before")
-    @classmethod
     def private_keys_validator(cls, v: str | list[str] | None) -> dict[str, str]:
         if v is None:
             return {}
