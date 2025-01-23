@@ -11,7 +11,7 @@ from mm_eth.account import is_private_key
 
 
 def get_version() -> str:
-    return importlib.metadata.version("mm-eth-cli")
+    return importlib.metadata.version("mm-eth")
 
 
 def public_rpc_url(url: str | None) -> str:
@@ -23,6 +23,10 @@ def public_rpc_url(url: str | None) -> str:
     match url.lower():
         case "opbnb" | "204":
             return "https://opbnb-mainnet-rpc.bnbchain.org"
+        case "base" | "8453":
+            return "https://mainnet.base.org"
+        case "base-sepolia" | "84532":
+            return "https://sepolia.base.org"
         case _:
             return url
 

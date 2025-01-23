@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import string
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import eth_abi
 import eth_utils
@@ -11,14 +11,10 @@ from eth_utils import to_checksum_address, to_hex
 from mm_std import Err, Ok, Result
 
 from mm_eth import rpc
+from mm_eth.rpc import Log
 from mm_eth.tx import SignedTx, sign_legacy_tx, sign_tx
+from mm_eth.types import Nodes, Proxies
 from mm_eth.utils import hex_str_to_int, hex_to_bytes, log_topic_to_address
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from mm_eth.rpc import Log
-    from mm_eth.types import Nodes, Proxies
 
 TRANSFER_METHOD = "0xa9059cbb"
 TRANSFER_TOPIC = HexStr("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef")

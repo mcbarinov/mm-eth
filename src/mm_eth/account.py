@@ -39,9 +39,7 @@ def generate_accounts(  # nosec
     for i in range(limit):
         path = f"{path_prefix}/{i}"
         acc = Account.from_mnemonic(mnemonic=mnemonic, account_path=path, passphrase=passphrase)
-        private_key = acc.key.hex().lower()
-        if not private_key.startswith("0x"):
-            private_key = f"0x{private_key}"
+        private_key = acc.key.to_0x_hex().lower()
         result.append(NewAccount(path, acc.address, private_key))
     return result
 
