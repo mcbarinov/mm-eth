@@ -44,4 +44,4 @@ def run(urls: list[str], print_format: PrintFormat, proxy: str | None) -> None:
             print_plain(f"base_fee: {base_fee}", print_format)
             print_plain("", print_format)
 
-    print_json(json_result, print_format)
+    print_json(json_result, print_format=print_format)

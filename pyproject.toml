@@ -2,14 +2,12 @@
 name = "mm-eth"
 version = "0.2.5"
 description = ""
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
-    "mm-std~=0.1.12",
+    "mm-crypto-utils>=0.0.7",
     "websocket-client~=1.8.0",
     "web3~=7.7.0",
-    "loguru~=0.7.3",
     "typer>=0.15.1",
-
 ]
 [project.scripts]
 mm-eth = "mm_eth.cli.cli:app"

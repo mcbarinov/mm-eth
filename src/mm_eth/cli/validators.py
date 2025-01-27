@@ -2,6 +2,7 @@ import os
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+import mm_crypto_utils
 from mm_std import str_to_list
 
 from mm_eth.utils import to_wei
@@ -69,7 +70,7 @@ def is_valid_calc_decimal_value(value: str | None) -> bool:
     if value is None:
         return True  # check for None on BaseModel.field type level
     try:
-        calcs.calc_decimal_value(value)
+        mm_crypto_utils.calc_decimal_value(value)
         return True  # noqa: TRY300
     except ValueError:
         return False

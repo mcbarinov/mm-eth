@@ -2,7 +2,7 @@ import random
 from decimal import Decimal
 
 from loguru import logger
-from mm_std.random_ import random_decimal
+from mm_crypto_utils import get_log_prefix
 from mm_std.str import split_on_plus_minus_tokens
 
 from mm_eth.utils import from_wei_str, to_wei
@@ -62,20 +62,6 @@ def calc_var_wei_value(value: str, *, var_name: str = "var", var_value: int | No
         raise ValueError(f"wrong value: {value}, error={err}") from err
 
 
-def calc_decimal_value(value: str) -> Decimal:
-    value = value.lower().strip()
-    if value.startswith("random(") and value.endswith(")"):
-        arr = value.lstrip("random(").rstrip(")").split(",")
-        if len(arr) != 2:
-            raise ValueError(f"wrong value, random part: {value}")
-        from_value = Decimal(arr[0])
-        to_value = Decimal(arr[1])
-        if from_value > to_value:
-            raise ValueError(f"wrong value, random part: {value}")
-        return random_decimal(from_value, to_value)
-    return Decimal(value)
-
-
 def calc_function_args(value: str) -> str:
     while True:
         if "random(" not in value:
@@ -99,14 +85,7 @@ def is_value_less_min_limit(
     if value_min_limit is None:
         return False
     if value < calc_var_wei_value(value_min_limit, decimals=decimals):
-        prefix = _get_prefix(log_prefix)
+        prefix = get_log_prefix(log_prefix)
         logger.info("{}value is less min limit, value={}", prefix, from_wei_str(value, value_unit, decimals=decimals))
         return True
     return False
-
-
-def _get_prefix(log_prefix: str | None) -> str:
-    prefix = log_prefix or ""
-    if prefix:
-        prefix += ": "
-    return prefix

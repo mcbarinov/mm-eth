@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import eth_utils
 from eth_account import Account
 from eth_account.hdaccount import Mnemonic
+from eth_account.signers.local import LocalAccount
 from eth_account.types import Language
 from eth_keys import KeyAPI
 from eth_typing import ChecksumAddress
@@ -44,22 +45,17 @@ def generate_accounts(  # nosec
     return result
 
 
+def get_address(private_key: str) -> str:
+    acc: LocalAccount = Account.from_key(private_key)
+    return acc.address
+
+
 def private_to_address(private_key: str) -> str | None:
     """returns address in lower case"""
     try:
         return key_api.PrivateKey(decode_hex(private_key)).public_key.to_address().lower()
     except Exception:
         return None
-
-
-def create_private_keys_dict(private_keys: list[str]) -> dict[str, str]:  # address in lower
-    result = {}
-    for private_key in private_keys:
-        address = private_to_address(private_key)
-        if address is None:
-            raise ValueError("wrong private key")
-        result[address.lower()] = private_key
-    return result
 
 
 def is_private_key(private_key: str) -> bool:

@@ -214,17 +214,17 @@ def config_example_command(command: Annotated[ConfigExample, typer.Argument()]) 
 
 @app.command(name="encode-input-data", help="Encode input data by a function signature")
 def encode_input_data(
-    funtion_signature: str = typer.Argument(help="Function signature, for example: transfer(address, uint256)"),
+    function_signature: str = typer.Argument(help="Function signature, for example: transfer(address, uint256)"),
     args_str: str = typer.Argument(
         help="""Function arguments, as an array string. For example: '["0xA659FB44eB5d4bFaC1074Cb426b1b11D58D28308", 123]' """,
     ),
 ) -> None:
-    encode_input_data_cmd.run(funtion_signature, args_str)
+    encode_input_data_cmd.run(function_signature, args_str)
 
 
 def version_callback(value: bool) -> None:
     if value:
-        print_plain(f"mm-eth-cli version: {cli_utils.get_version()}")
+        print_plain(f"mm-eth: {cli_utils.get_version()}")
         raise typer.Exit
 
 

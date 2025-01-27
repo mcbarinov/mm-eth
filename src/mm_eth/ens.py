@@ -1,7 +1,7 @@
+from mm_crypto_utils import Nodes, Proxies, random_node, random_proxy
 from mm_std import Err, Ok, Result
 
-from mm_eth.types import Nodes, Proxies
-from mm_eth.utils import get_w3, random_node, random_proxy
+from mm_eth.utils import get_w3
 
 
 def get_name(nodes: Nodes, address: str, timeout: int = 10, proxies: Proxies = None, attempts: int = 3) -> Result[str]:

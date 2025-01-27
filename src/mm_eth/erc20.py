@@ -8,12 +8,12 @@ import eth_abi
 import eth_utils
 from eth_typing import HexStr
 from eth_utils import to_checksum_address, to_hex
+from mm_crypto_utils import Nodes, Proxies
 from mm_std import Err, Ok, Result
 
 from mm_eth import rpc
 from mm_eth.rpc import Log
 from mm_eth.tx import SignedTx, sign_legacy_tx, sign_tx
-from mm_eth.types import Nodes, Proxies
 from mm_eth.utils import hex_str_to_int, hex_to_bytes, log_topic_to_address
 
 TRANSFER_METHOD = "0xa9059cbb"

@@ -5,12 +5,12 @@ from dataclasses import dataclass
 from typing import Any, Literal, cast
 
 import websocket
+from mm_crypto_utils import Nodes, Proxies, random_node, random_proxy
 from mm_std import Err, Ok, Result, hr, random_choice
 from pydantic import BaseModel
 from web3.types import BlockIdentifier
 
-from mm_eth.types import Nodes, Proxies
-from mm_eth.utils import hex_str_to_int, random_node, random_proxy
+from mm_eth.utils import hex_str_to_int
 
 
 @dataclass

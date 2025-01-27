@@ -48,4 +48,4 @@ def run(rpc_url: str, wallet_address: str, token_address: str | None, wei: bool,
         print_plain(f"token_balance: {balance}", print_format)
         json_result["token_balance"] = balance
 
-    print_json(json_result, print_format)
+    print_json(json_result, print_format=print_format)

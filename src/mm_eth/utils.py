@@ -6,13 +6,10 @@ import eth_utils
 import pydash
 from eth_typing import HexStr
 from hexbytes import HexBytes
-from mm_std import Err, Ok, Result, number_with_separator, random_choice
-from mm_std.random_ import random_str_choice
+from mm_std import Err, Ok, Result, number_with_separator
 from pydantic import BaseModel
 from web3 import Web3
 from web3.types import Wei
-
-from mm_eth.types import Nodes, Proxies
 
 
 def parse_addresses(data: str) -> list[str]:
@@ -227,17 +224,6 @@ def hex_str_to_int(value: str) -> Result[int]:
         return Ok(int(value, 16))
     except Exception:
         return Err(f"can't convert to int: {value}")
-
-
-def random_node(nodes: Nodes, remove_slash: bool = True) -> str:
-    node = cast(str, random_choice(nodes))
-    if remove_slash and node.endswith("/"):
-        node = node.removesuffix("/")
-    return node
-
-
-def random_proxy(proxies: Proxies) -> str | None:
-    return random_str_choice(proxies)
 
 
 def to_hex(data: bytes | int | bool) -> str:
