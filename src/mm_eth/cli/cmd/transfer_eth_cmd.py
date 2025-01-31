@@ -7,11 +7,11 @@ import mm_crypto_utils
 from loguru import logger
 from mm_crypto_utils import AddressToPrivate, TxRoute
 from mm_std import BaseConfig, Err, Ok, utc_now
-from pydantic import BeforeValidator, Field, model_validator
+from pydantic import AfterValidator, BeforeValidator, Field, model_validator
 
 from mm_eth import rpc
 from mm_eth.account import address_from_private, is_address
-from mm_eth.cli import calcs, cli_utils, print_helpers, rpc_helpers, validators
+from mm_eth.cli import calcs, cli_utils, print_helpers, rpc_helpers
 from mm_eth.cli.validators import Validators
 from mm_eth.tx import sign_tx
 from mm_eth.utils import from_wei_str
@@ -27,13 +27,13 @@ class Config(BaseConfig):
         AddressToPrivate, Field(default_factory=AddressToPrivate), BeforeValidator(Validators.private_keys(address_from_private))
     ]
     private_keys_file: Path | None = None
-    max_fee_per_gas: str
-    max_fee_per_gas_limit: str | None = None
-    max_priority_fee_per_gas: str
-    value: str
-    value_min_limit: str | None = None
-    gas: str
-    delay: str | None = None  # in seconds
+    max_fee: Annotated[str, AfterValidator(Validators.valid_calc_value("base_fee"))]
+    priority_fee: Annotated[str, AfterValidator(Validators.valid_calc_value())]
+    max_fee_limit: Annotated[str | None, AfterValidator(Validators.valid_calc_value())] = None
+    value: Annotated[str, AfterValidator(Validators.valid_calc_value("balance"))]
+    value_min_limit: Annotated[str | None, AfterValidator(Validators.valid_calc_value())] = None
+    gas: Annotated[str, AfterValidator(Validators.valid_calc_value("estimate"))]
+    delay: Annotated[str | None, AfterValidator(Validators.valid_calc_decimal_value())] = None  # in seconds
     round_ndigits: int = 5
     log_debug: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
     log_info: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
@@ -45,47 +45,17 @@ class Config(BaseConfig):
     # noinspection DuplicatedCode
     @model_validator(mode="after")
     def final_validator(self) -> Self:
-        # routes_files
+        # routes
         if self.routes_from_file and self.routes_to_file:
             self.routes += TxRoute.from_files(self.routes_from_file, self.routes_to_file, is_address)
         if not self.routes:
             raise ValueError("routes is empty")
 
-        # load private keys from file
+        # private keys
         if self.private_keys_file:
             self.private_keys.update(AddressToPrivate.from_file(self.private_keys_file, address_from_private))
-
-        # check all private keys exist
         if not self.private_keys.contains_all_addresses(self.from_addresses):
             raise ValueError("private keys are not set for all addresses")
-
-        # max_fee_per_gas
-        if not validators.is_valid_calc_var_wei_value(self.max_fee_per_gas, "base"):
-            raise ValueError(f"wrong max_fee_per_gas: {self.max_fee_per_gas}")
-
-        # max_fee_per_gas_limit
-        if not validators.is_valid_calc_var_wei_value(self.max_fee_per_gas_limit, "base"):
-            raise ValueError(f"wrong max_fee_per_gas_limit: {self.max_fee_per_gas_limit}")
-
-        # max_priority_fee_per_gas
-        if not validators.is_valid_calc_var_wei_value(self.max_priority_fee_per_gas):
-            raise ValueError(f"wrong max_priority_fee_per_gas: {self.max_priority_fee_per_gas}")
-
-        # value
-        if not validators.is_valid_calc_var_wei_value(self.value, "balance"):
-            raise ValueError(f"wrong value: {self.value}")
-
-        # value_min_limit
-        if not validators.is_valid_calc_var_wei_value(self.value_min_limit):
-            raise ValueError(f"wrong value_min_limit: {self.value_min_limit}")
-
-        # gas
-        if not validators.is_valid_calc_var_wei_value(self.gas, "estimate"):
-            raise ValueError(f"wrong gas: {self.gas}")
-
-        # delay
-        if not validators.is_valid_calc_decimal_value(self.delay):
-            raise ValueError(f"wrong delay: {self.delay}")
 
         return self
 
@@ -134,13 +104,13 @@ def _transfer(*, route: TxRoute, config: Config, no_receipt: bool, emulate: bool
     if nonce is None:
         return
 
-    # get max_fee_per_gas
-    max_fee_per_gas = rpc_helpers.calc_max_fee_per_gas(config.nodes, config.max_fee_per_gas, log_prefix)
-    if max_fee_per_gas is None:
+    # get max_fee
+    max_fee = rpc_helpers.calc_max_fee(config.nodes, config.max_fee, log_prefix)
+    if max_fee is None:
         return
 
-    # check max_fee_per_gas_limit
-    if rpc_helpers.is_max_fee_per_gas_limit_exceeded(max_fee_per_gas, config.max_fee_per_gas_limit, log_prefix):
+    # check max_fee_limit
+    if rpc_helpers.is_max_fee_limit_exceeded(max_fee, config.max_fee_limit, log_prefix):
         return
 
     # get gas
@@ -161,7 +131,7 @@ def _transfer(*, route: TxRoute, config: Config, no_receipt: bool, emulate: bool
         value_str=config.value,
         address=route.from_address,
         gas=gas,
-        max_fee_per_gas=max_fee_per_gas,
+        max_fee=max_fee,
         log_prefix=log_prefix,
     )
     if value is None:
@@ -171,31 +141,31 @@ def _transfer(*, route: TxRoute, config: Config, no_receipt: bool, emulate: bool
     if calcs.is_value_less_min_limit(config.value_min_limit, value, "eth", log_prefix=log_prefix):
         return
 
-    max_priority_fee_per_gas = calcs.calc_var_wei_value(config.max_priority_fee_per_gas)
-    tx_params = {
+    priority_fee = calcs.calc_var_value(config.priority_fee)
+
+    # emulate?
+    if emulate:
+        msg = f"{log_prefix}: emulate, value={from_wei_str(value, 'eth', config.round_ndigits)},"
+        msg += f" max_fee={from_wei_str(max_fee, 'gwei', config.round_ndigits)},"
+        msg += f" priority_fee={from_wei_str(priority_fee, 'gwei', config.round_ndigits)},"
+        msg += f" gas={gas}"
+        logger.info(msg)
+        return
+
+    debug_tx_params = {
         "nonce": nonce,
-        "max_fee_per_gas": max_fee_per_gas,
-        "max_priority_fee_per_gas": max_priority_fee_per_gas,
+        "max_fee": max_fee,
+        "priority_fee": priority_fee,
         "gas": gas,
         "value": value,
         "to": route.to_address,
         "chain_id": config.chain_id,
     }
-
-    # emulate?
-    if emulate:
-        msg = f"{log_prefix}: emulate, value={from_wei_str(value, 'eth', config.round_ndigits)},"
-        msg += f" max_fee_per_gas={from_wei_str(max_fee_per_gas, 'gwei', config.round_ndigits)},"
-        msg += f" max_priority_fee_per_gas={from_wei_str(max_priority_fee_per_gas, 'gwei', config.round_ndigits)},"
-        msg += f" gas={gas}"
-        logger.info(msg)
-        return
-
-    logger.debug(f"{log_prefix}: tx_params={tx_params}")
+    logger.debug(f"{log_prefix}: tx_params={debug_tx_params}")
     signed_tx = sign_tx(
         nonce=nonce,
-        max_fee_per_gas=max_fee_per_gas,
-        max_priority_fee_per_gas=max_priority_fee_per_gas,
+        max_fee_per_gas=max_fee,
+        max_priority_fee_per_gas=priority_fee,
         gas=gas,
         private_key=config.private_keys[route.from_address],
         chain_id=config.chain_id,

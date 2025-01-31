@@ -37,30 +37,26 @@ def get_base_fee(nodes: list[str], log_prefix: str | None = None) -> int | None:
     return res.ok
 
 
-def calc_max_fee_per_gas(nodes: list[str], max_fee_per_gas: str, log_prefix: str | None = None) -> int | None:
-    if "base" in max_fee_per_gas.lower():
+def calc_max_fee(nodes: list[str], max_fee: str, log_prefix: str | None = None) -> int | None:
+    if "base_fee" in max_fee.lower():
         base_fee = get_base_fee(nodes, log_prefix)
         if base_fee is None:
             return None
-        return calcs.calc_var_wei_value(max_fee_per_gas, var_name="base", var_value=base_fee)
-    return calcs.calc_var_wei_value(max_fee_per_gas)
+        return calcs.calc_var_value(max_fee, var_name="base_fee", var_value=base_fee)
+    return calcs.calc_var_value(max_fee)
 
 
-def is_max_fee_per_gas_limit_exceeded(
-    max_fee_per_gas: int,
-    max_fee_per_gas_limit: str | None,
-    log_prefix: str | None = None,
-) -> bool:
-    if max_fee_per_gas_limit is None:
+def is_max_fee_limit_exceeded(max_fee: int, max_fee_limit: str | None, log_prefix: str | None = None) -> bool:
+    if max_fee_limit is None:
         return False
-    max_fee_per_gas_limit_value = calcs.calc_var_wei_value(max_fee_per_gas_limit)
-    if max_fee_per_gas > max_fee_per_gas_limit_value:
+    max_limit_value = calcs.calc_var_value(max_fee_limit)
+    if max_fee > max_limit_value:
         prefix = get_log_prefix(log_prefix)
         logger.info(
-            "{}max_fee_per_gas_limit is exceeded, max_fee_per_gas={}, max_fee_per_gas_limit={}",
+            "{}max_fee_limit is exceeded, max_fee={}, max_fee_limit={}",
             prefix,
-            from_wei_str(max_fee_per_gas, "gwei"),
-            from_wei_str(max_fee_per_gas_limit_value, "gwei"),
+            from_wei_str(max_fee, "gwei"),
+            from_wei_str(max_limit_value, "gwei"),
         )
         return True
     return False
@@ -85,7 +81,7 @@ def calc_gas(
             logger.info(f"{prefix}estimate_gas error, {res.err}")
             return None
         estimate_value = res.ok
-    return calcs.calc_var_wei_value(gas, var_name="estimate", var_value=estimate_value)
+    return calcs.calc_var_value(gas, var_name="estimate", var_value=estimate_value)
 
 
 def calc_eth_value(
@@ -94,7 +90,7 @@ def calc_eth_value(
     value_str: str,
     address: str,
     gas: int | None = None,
-    max_fee_per_gas: int | None = None,
+    max_fee: int | None = None,
     log_prefix: str | None = None,
 ) -> int | None:
     balance_value = None
@@ -106,9 +102,9 @@ def calc_eth_value(
             logger.info(f"{prefix}balance error, {res.err}")
             return None
         balance_value = res.ok
-    value = calcs.calc_var_wei_value(value_str, var_name="balance", var_value=balance_value)
-    if "balance" in value_str.lower() and gas is not None and max_fee_per_gas is not None:
-        value = value - gas * max_fee_per_gas
+    value = calcs.calc_var_value(value_str, var_name="balance", var_value=balance_value)
+    if "balance" in value_str.lower() and gas is not None and max_fee is not None:
+        value = value - gas * max_fee
     return value
 
 
@@ -131,4 +127,4 @@ def calc_erc20_value(
             logger.info(f"{prefix}balance error, {res.err}")
             return None
         balance_value = res.ok
-    return calcs.calc_var_wei_value(value_str, var_name="balance", var_value=balance_value, decimals=decimals)
+    return calcs.calc_var_value(value_str, var_name="balance", var_value=balance_value, decimals=decimals)

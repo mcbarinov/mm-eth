@@ -8,7 +8,7 @@ from mm_std.str import split_on_plus_minus_tokens
 from mm_eth.utils import from_wei_str, to_wei
 
 
-def calc_var_wei_value(value: str, *, var_name: str = "var", var_value: int | None = None, decimals: int | None = None) -> int:
+def calc_var_value(value: str, *, var_name: str = "var", var_value: int | None = None, decimals: int | None = None) -> int:
     if not isinstance(value, str):
         raise TypeError(f"value is not str: {value}")
     try:
@@ -84,7 +84,7 @@ def is_value_less_min_limit(
 ) -> bool:
     if value_min_limit is None:
         return False
-    if value < calc_var_wei_value(value_min_limit, decimals=decimals):
+    if value < calc_var_value(value_min_limit, decimals=decimals):
         prefix = get_log_prefix(log_prefix)
         logger.info("{}value is less min limit, value={}", prefix, from_wei_str(value, value_unit, decimals=decimals))
         return True

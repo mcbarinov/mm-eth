@@ -57,23 +57,23 @@ class Config(BaseConfig):
             raise ValueError("from_addresses is empty")
 
         # max_fee_per_gas
-        if not validators.is_valid_calc_var_wei_value(self.max_fee_per_gas, "base"):
+        if not validators.is_valid_calc_var_value(self.max_fee_per_gas, "base"):
             raise ValueError(f"wrong max_fee_per_gas: {self.max_fee_per_gas}")
 
         # max_fee_per_gas_limit
-        if not validators.is_valid_calc_var_wei_value(self.max_fee_per_gas_limit, "base"):
+        if not validators.is_valid_calc_var_value(self.max_fee_per_gas_limit, "base"):
             raise ValueError(f"wrong max_fee_per_gas_limit: {self.max_fee_per_gas_limit}")
 
         # max_priority_fee_per_gas
-        if not validators.is_valid_calc_var_wei_value(self.max_priority_fee_per_gas):
+        if not validators.is_valid_calc_var_value(self.max_priority_fee_per_gas):
             raise ValueError(f"wrong max_priority_fee_per_gas: {self.max_priority_fee_per_gas}")
 
         # value
-        if self.value is not None and not validators.is_valid_calc_var_wei_value(self.value, "balance"):
+        if self.value is not None and not validators.is_valid_calc_var_value(self.value, "balance"):
             raise ValueError(f"wrong value: {self.value}")
 
         # gas
-        if not validators.is_valid_calc_var_wei_value(self.gas, "estimate"):
+        if not validators.is_valid_calc_var_value(self.gas, "estimate"):
             raise ValueError(f"wrong gas: {self.gas}")
 
         # delay
@@ -134,15 +134,15 @@ def _transfer(*, from_address: str, config: Config, no_receipt: bool, emulate: b
         return
 
     # get max_fee_per_gas
-    max_fee_per_gas = rpc_helpers.calc_max_fee_per_gas(config.nodes, config.max_fee_per_gas, log_prefix)
+    max_fee_per_gas = rpc_helpers.calc_max_fee(config.nodes, config.max_fee_per_gas, log_prefix)
     if max_fee_per_gas is None:
         return
 
     # check max_fee_per_gas_limit
-    if rpc_helpers.is_max_fee_per_gas_limit_exceeded(max_fee_per_gas, config.max_fee_per_gas_limit, log_prefix):
+    if rpc_helpers.is_max_fee_limit_exceeded(max_fee_per_gas, config.max_fee_per_gas_limit, log_prefix):
         return
 
-    max_priority_fee_per_gas = calcs.calc_var_wei_value(config.max_priority_fee_per_gas)
+    max_priority_fee_per_gas = calcs.calc_var_value(config.max_priority_fee_per_gas)
 
     # data
     function_args = calcs.calc_function_args(config.function_args).replace("'", '"')
@@ -169,7 +169,7 @@ def _transfer(*, from_address: str, config: Config, no_receipt: bool, emulate: b
             value_str=config.value,
             address=from_address,
             gas=gas,
-            max_fee_per_gas=max_fee_per_gas,
+            max_fee=max_fee_per_gas,
             log_prefix=log_prefix,
         )
         if value is None:
