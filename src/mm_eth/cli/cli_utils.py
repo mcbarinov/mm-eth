@@ -12,6 +12,8 @@ def public_rpc_url(url: str | None) -> str:
         return url
 
     match url.lower():
+        case "mainnet" | "1":
+            return "https://ethereum.publicnode.com"
         case "opbnb" | "204":
             return "https://opbnb-mainnet-rpc.bnbchain.org"
         case "base" | "8453":

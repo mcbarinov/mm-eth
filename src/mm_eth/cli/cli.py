@@ -22,6 +22,7 @@ from .cmd import (
     token_cmd,
     transfer_erc20_cmd,
     transfer_eth_cmd,
+    tx_cmd,
     vault_cmd,
 )
 
@@ -43,7 +44,7 @@ class ConfigExample(str, Enum):
 def balance_command(
     wallet_address: Annotated[str, typer.Argument()],
     token_address: Annotated[str | None, typer.Option("--token", "-t")] = None,
-    rpc_url: Annotated[str, typer.Option("--url", "-u", envvar="ETH_RPC_URL")] = "",  # nosec
+    rpc_url: Annotated[str, typer.Option("--url", "-u", envvar="MM_ETH_RPC_URL")] = "",  # nosec
     wei: bool = typer.Option(False, "--wei", "-w", help="Print balances in wei units"),
     print_format: Annotated[PrintFormat, typer.Option("--format", "-f", help="Print format")] = PrintFormat.PLAIN,
 ) -> None:
@@ -53,7 +54,7 @@ def balance_command(
 @app.command(name="token", help="Get token info")
 def token_command(
     token_address: Annotated[str, typer.Argument()],
-    rpc_url: Annotated[str, typer.Option("--url", "-u", envvar="ETH_RPC_URL")] = "",
+    rpc_url: Annotated[str, typer.Option("--url", "-u", envvar="MM_ETH_RPC_URL")] = "",
 ) -> None:
     token_cmd.run(rpc_url, token_address)
 
@@ -119,10 +120,19 @@ def vault_command(
 def rpc_command(
     method: Annotated[str, typer.Argument()] = "",
     params: Annotated[str, typer.Argument()] = "[]",
-    rpc_url: Annotated[str, typer.Option("--url", "-u", envvar="ETH_RPC_URL", help="RPC node url")] = "",
+    rpc_url: Annotated[str, typer.Option("--url", "-u", envvar="MM_ETH_RPC_URL", help="RPC node url")] = "",
     hex2dec: Annotated[bool, typer.Option("--hex2dec", "-d", help="Print result in decimal value")] = False,
 ) -> None:
     rpc_cmd.run(rpc_url, method, params, hex2dec)
+
+
+@app.command(name="tx", help="Get transaction info by hash")
+def tx_command(
+    tx_hash: Annotated[str, typer.Argument()],
+    rpc_url: Annotated[str, typer.Option("--url", "-u", envvar="MM_ETH_RPC_URL", help="RPC node url")] = "",
+    get_receipt: Annotated[bool, typer.Option("--receipt", "-r", help="Get receipt")] = False,
+) -> None:
+    tx_cmd.run(rpc_url, tx_hash, get_receipt)
 
 
 @app.command(name="transfer-eth", help="Transfer eth / base token from one or many accounts")
