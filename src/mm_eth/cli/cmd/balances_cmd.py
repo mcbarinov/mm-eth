@@ -1,28 +1,22 @@
 from dataclasses import dataclass
+from typing import Annotated
 
 from mm_std import BaseConfig, Err, Ok, fatal
-from pydantic import Field, field_validator
+from pydantic import BeforeValidator
 from rich.live import Live
 from rich.table import Table
 
 from mm_eth import erc20, rpc
-from mm_eth.cli import cli_utils, validators
+from mm_eth.account import is_address
+from mm_eth.cli.validators import Validators
 from mm_eth.utils import from_token_wei_str, from_wei_str
 
 
 class Config(BaseConfig):
-    addresses: list[str]
-    tokens: list[str] = Field(default_factory=list)
-    nodes: list[str]
+    addresses: Annotated[list[str], BeforeValidator(Validators.addresses(unique=True, lower=True, is_address=is_address))]
+    tokens: Annotated[list[str], BeforeValidator(Validators.addresses(unique=True, lower=True, is_address=is_address))]
+    nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
     round_ndigits: int = 5
-
-    @field_validator("nodes", mode="before")
-    def nodes_validator(cls, v: str | list[str] | None) -> list[str]:
-        return validators.nodes_validator(v)
-
-    @field_validator("tokens", "addresses", mode="before")
-    def addresses_validator(cls, v: str | list[str] | None) -> list[str]:
-        return validators.addresses_validator(v)
 
 
 @dataclass
@@ -34,7 +28,8 @@ class Token:
 
 def run(config_path: str, print_config: bool, wei: bool, show_nonce: bool) -> None:
     config = Config.read_config_or_exit(config_path)
-    cli_utils.print_config_and_exit(print_config, config)
+    if print_config:
+        config.print_and_exit()
 
     tokens = _get_tokens_info(config)
 

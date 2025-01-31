@@ -1,4 +1,5 @@
 from enum import Enum
+from pathlib import Path
 from typing import Annotated
 
 import typer
@@ -109,7 +110,7 @@ def vault_command(
         str,
         typer.Option(..., "--token", "-t", prompt=True, hide_input=True, prompt_required=False, help="A vault token"),
     ],
-    keys_file: Annotated[str, typer.Option(..., "--file", "-f", help="Path to a file with private keys")],
+    keys_file: Annotated[Path, typer.Option(..., "--file", "-f", help="Path to a file with private keys")],
 ) -> None:
     vault_cmd.run(keys_url, vault_token, keys_file)
 

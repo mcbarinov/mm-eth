@@ -4,7 +4,7 @@ version = "0.2.5"
 description = ""
 requires-python = ">=3.13"
 dependencies = [
-    "mm-crypto-utils>=0.0.7",
+    "mm-crypto-utils>=0.0.15",
     "websocket-client~=1.8.0",
     "web3~=7.7.0",
     "typer>=0.15.1",
@@ -20,7 +20,7 @@ build-backend = "hatchling.build"
 dev-dependencies = [
     "pytest~=8.3.4",
     "pytest-xdist~=3.6.1",
-    "ruff~=0.9.2",
+    "ruff~=0.9.4",
     "pip-audit~=2.7.3",
     "bandit~=1.8.2",
     "mypy~=1.14.1",

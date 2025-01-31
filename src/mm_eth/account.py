@@ -45,9 +45,10 @@ def generate_accounts(  # nosec
     return result
 
 
-def get_address(private_key: str) -> str:
+def address_from_private(private_key: str) -> str:
+    """returns address in lower case"""
     acc: LocalAccount = Account.from_key(private_key)
-    return acc.address
+    return acc.address.lower()
 
 
 def private_to_address(private_key: str) -> str | None:
@@ -64,3 +65,7 @@ def is_private_key(private_key: str) -> bool:
         return True  # noqa: TRY300
     except Exception:
         return False
+
+
+def is_address(address: str) -> bool:
+    return eth_utils.is_address(address)

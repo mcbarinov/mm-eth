@@ -3,7 +3,7 @@ from mm_std import BaseConfig, fatal
 from pydantic import StrictStr
 
 from mm_eth import account, deploy
-from mm_eth.cli import cli_utils, rpc_helpers
+from mm_eth.cli import rpc_helpers
 
 
 class Config(BaseConfig):
@@ -22,7 +22,8 @@ class Config(BaseConfig):
 
 def run(config_path: str, *, print_config: bool) -> None:
     config = Config.read_config_or_exit(config_path)
-    cli_utils.print_config_and_exit(print_config, config, {"private_key"})
+    if print_config:
+        config.print_and_exit({"private_key"})
 
     constructor_types = yaml.full_load(config.constructor_types)
     constructor_values = yaml.full_load(config.constructor_values)

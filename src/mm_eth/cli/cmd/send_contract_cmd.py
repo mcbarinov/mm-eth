@@ -2,17 +2,18 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Self
+from typing import Annotated, Self
 
 import mm_crypto_utils
 from loguru import logger
-from mm_crypto_utils import AddressToPrivate
-from mm_std import BaseConfig, Err, Ok, str_to_list, utc_now
-from pydantic import Field, StrictStr, field_validator, model_validator
+from mm_crypto_utils import AddressToPrivate, ConfigValidators
+from mm_std import BaseConfig, Err, Ok, utc_now
+from pydantic import BeforeValidator, Field, StrictStr, model_validator
 
 from mm_eth import abi, rpc
-from mm_eth.account import get_address, private_to_address
+from mm_eth.account import address_from_private, is_address
 from mm_eth.cli import calcs, cli_utils, print_helpers, rpc_helpers, validators
+from mm_eth.cli.validators import Validators
 from mm_eth.tx import sign_tx
 from mm_eth.utils import from_wei_str
 
@@ -21,46 +22,35 @@ class Config(BaseConfig):
     contract_address: str
     function_signature: str
     function_args: StrictStr = "[]"
-    nodes: list[StrictStr]
+    nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
     chain_id: int
-    private_keys: AddressToPrivate = Field(default_factory=AddressToPrivate)
+    private_keys: Annotated[
+        AddressToPrivate,
+        Field(default_factory=AddressToPrivate),
+        BeforeValidator(ConfigValidators.private_keys(address_from_private)),
+    ]
     private_keys_file: Path | None = None
     max_fee_per_gas: str
     max_fee_per_gas_limit: str | None = None
     max_priority_fee_per_gas: str
     value: str | None = None
     gas: str
-    from_addresses: list[str]
+    from_addresses: Annotated[list[str], BeforeValidator(Validators.addresses(unique=True, lower=True, is_address=is_address))]
     delay: str | None = None  # in seconds
     round_ndigits: int = 5
-    log_debug: Path | None = None
-    log_info: Path | None = None
-
-    @field_validator("log_debug", "log_info", mode="before")
-    def log_validator(cls, v: str | None) -> str | None:
-        return validators.log_validator(v)
-
-    @field_validator("nodes", "from_addresses", mode="before")
-    def list_validator(cls, v: str | list[str] | None) -> list[str]:
-        return validators.nodes_validator(v)
-
-    @field_validator("from_addresses", mode="before")
-    def from_addresses_validator(cls, v: str | list[str] | None) -> list[str]:
-        return str_to_list(v, remove_comments=True, lower=True)
-
-    @field_validator("private_keys", mode="before")
-    def private_keys_validator(cls, v: str | list[str] | None) -> AddressToPrivate:
-        if v is None:
-            return AddressToPrivate()
-        private_keys = str_to_list(v, unique=True, remove_comments=True) if isinstance(v, str) else v
-        return AddressToPrivate.from_list(private_keys, get_address, address_lowercase=True)
+    log_debug: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
+    log_info: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
 
     # noinspection DuplicatedCode
     @model_validator(mode="after")
     def final_validator(self) -> Self:
         # load private keys from file
         if self.private_keys_file:
-            self.private_keys.update(AddressToPrivate.from_file(self.private_keys_file, private_to_address))
+            self.private_keys.update(AddressToPrivate.from_file(self.private_keys_file, address_from_private))
+
+        # check all private keys exist
+        if not self.private_keys.contains_all_addresses(self.from_addresses):
+            raise ValueError("private keys are not set for all addresses")
 
         # check that from_addresses is not empty
         if not self.from_addresses:
@@ -108,7 +98,8 @@ def run(
     emulate: bool,
 ) -> None:
     config = Config.read_config_or_exit(config_path)
-    cli_utils.print_config_and_exit(print_config, config, {"private_key"})
+    if print_config:
+        config.print_and_exit({"private_key"})
 
     mm_crypto_utils.init_logger(debug, config.log_debug, config.log_info)
 
@@ -125,7 +116,6 @@ def run(
 def _run_transfers(config: Config, *, no_receipt: bool, emulate: bool) -> None:
     logger.info(f"started at {utc_now()} UTC")
     logger.debug(f"config={config.model_dump(exclude={'private_keys'}) | {'version': cli_utils.get_version()}}")
-    cli_utils.check_private_keys(config.from_addresses, config.private_keys)
     for i, from_address in enumerate(config.from_addresses):
         _transfer(from_address=from_address, config=config, no_receipt=no_receipt, emulate=emulate)
         if not emulate and config.delay is not None and i < len(config.from_addresses) - 1:

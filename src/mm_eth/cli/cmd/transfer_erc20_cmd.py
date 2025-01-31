@@ -1,72 +1,64 @@
 import sys
 import time
 from pathlib import Path
-from typing import Self
+from typing import Annotated, Self
 
-import eth_utils
 import mm_crypto_utils
 from loguru import logger
 from mm_crypto_utils import AddressToPrivate, TxRoute
-from mm_std import BaseConfig, Err, Ok, fatal, str_to_list, utc_now
-from pydantic import Field, StrictStr, field_validator, model_validator
+from mm_std import BaseConfig, Err, Ok, fatal, utc_now
+from pydantic import BeforeValidator, Field, model_validator
 
 from mm_eth import erc20, rpc
-from mm_eth.account import get_address, private_to_address
+from mm_eth.account import address_from_private, is_address
 from mm_eth.cli import calcs, cli_utils, print_helpers, rpc_helpers, validators
+from mm_eth.cli.validators import Validators
 from mm_eth.utils import from_wei_str
 
 
 class Config(BaseConfig):
-    class Tx(BaseConfig):
-        from_address: str
-        to_address: str
-
+    nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
+    chain_id: int
+    routes: Annotated[list[TxRoute], BeforeValidator(Validators.routes(is_address, to_lower=True))]
+    routes_from_file: Path | None = None
+    routes_to_file: Path | None = None
+    private_keys: Annotated[
+        AddressToPrivate, Field(default_factory=AddressToPrivate), BeforeValidator(Validators.private_keys(address_from_private))
+    ]
+    private_keys_file: Path | None = None
     token: str
     decimals: int
-    nodes: list[StrictStr]
-    chain_id: int
-    private_keys: AddressToPrivate = Field(default_factory=AddressToPrivate)
-    private_keys_file: Path | None = None
     max_fee_per_gas: str
     max_fee_per_gas_limit: str | None = None
     max_priority_fee_per_gas: str
     value: str
     value_min_limit: str | None = None
     gas: str
-    addresses_map: str | None = None
-    addresses_from_file: Path | None = None
-    addresses_to_file: Path | None = None
     delay: str | None = None  # in seconds
     round_ndigits: int = 5
-    log_debug: Path | None = None
-    log_info: Path | None = None
-    txs: list[Tx] = Field(default_factory=list)
+    log_debug: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
+    log_info: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
 
     @property
     def from_addresses(self) -> list[str]:
-        return [tx.from_address for tx in self.txs]
-
-    @field_validator("log_debug", "log_info", mode="before")
-    def log_validator(cls, v: str | None) -> str | None:
-        return validators.log_validator(v)
-
-    @field_validator("nodes", mode="before")
-    def nodes_validator(cls, v: str | list[str] | None) -> list[str]:
-        return validators.nodes_validator(v)
-
-    @field_validator("private_keys", mode="before")
-    def private_keys_validator(cls, v: str | list[str] | None) -> AddressToPrivate:
-        if v is None:
-            return AddressToPrivate()
-        private_keys = str_to_list(v, unique=True, remove_comments=True) if isinstance(v, str) else v
-        return AddressToPrivate.from_list(private_keys, get_address, address_lowercase=True)
+        return [r.from_address for r in self.routes]
 
     # noinspection DuplicatedCode
     @model_validator(mode="after")
     def final_validator(self) -> Self:
+        # routes_files
+        if self.routes_from_file and self.routes_to_file:
+            self.routes += TxRoute.from_files(self.routes_from_file, self.routes_to_file, is_address)
+        if not self.routes:
+            raise ValueError("routes is empty")
+
         # load private keys from file
         if self.private_keys_file:
-            self.private_keys.update(AddressToPrivate.from_file(self.private_keys_file, private_to_address))
+            self.private_keys.update(AddressToPrivate.from_file(self.private_keys_file, address_from_private))
+
+        # check all private keys exist
+        if not self.private_keys.contains_all_addresses(self.from_addresses):
+            raise ValueError("private keys are not set for all addresses")
 
         # max_fee_per_gas
         if not validators.is_valid_calc_var_wei_value(self.max_fee_per_gas, "base"):
@@ -96,17 +88,6 @@ class Config(BaseConfig):
         if not validators.is_valid_calc_decimal_value(self.delay):
             raise ValueError(f"wrong delay: {self.delay}")
 
-        # txs
-        if self.addresses_map:
-            for tr in TxRoute.from_str(self.addresses_map, eth_utils.is_address, lowercase=True):
-                self.txs.append(Config.Tx(from_address=tr.from_address, to_address=tr.to_address))
-        if self.addresses_from_file and self.addresses_to_file:
-            tx_routes = TxRoute.from_files(self.addresses_from_file, self.addresses_to_file, eth_utils.is_address, lowercase=True)
-            self.txs.extend([Config.Tx(from_address=tr.from_address, to_address=tr.to_address) for tr in tx_routes])
-
-        if not self.txs:
-            raise ValueError("txs is empty")
-
         return self
 
 
@@ -121,7 +102,8 @@ def run(
     emulate: bool,
 ) -> None:
     config = Config.read_config_or_exit(config_path)
-    cli_utils.print_config_and_exit(print_config, config, {"private_key", "addresses_map"})
+    if print_config:
+        config.print_and_exit({"private_key"})
 
     mm_crypto_utils.init_logger(debug, config.log_debug, config.log_info)
     rpc_helpers.check_nodes_for_chain_id(config.nodes, config.chain_id)
@@ -150,10 +132,11 @@ def run(
 def _run_transfers(config: Config, *, no_receipt: bool, emulate: bool) -> None:
     logger.info(f"started at {utc_now()} UTC")
     logger.debug(f"config={config.model_dump(exclude={'private_keys', 'addresses_map'}) | {'version': cli_utils.get_version()}}")
-    cli_utils.check_private_keys(config.from_addresses, config.private_keys)
-    for i, tx in enumerate(config.txs):
-        _transfer(from_address=tx.from_address, to_address=tx.to_address, config=config, no_receipt=no_receipt, emulate=emulate)
-        if not emulate and config.delay is not None and i < len(config.txs) - 1:
+    for i, route in enumerate(config.routes):
+        _transfer(
+            from_address=route.from_address, to_address=route.to_address, config=config, no_receipt=no_receipt, emulate=emulate
+        )
+        if not emulate and config.delay is not None and i < len(config.routes) - 1:
             delay_value = mm_crypto_utils.calc_decimal_value(config.delay)
             logger.debug(f"delay {delay_value} seconds")
             time.sleep(float(delay_value))
