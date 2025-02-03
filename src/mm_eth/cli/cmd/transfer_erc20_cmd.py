@@ -7,34 +7,30 @@ import mm_crypto_utils
 from loguru import logger
 from mm_crypto_utils import AddressToPrivate, TxRoute
 from mm_std import BaseConfig, Err, Ok, fatal, utc_now
-from pydantic import BeforeValidator, Field, model_validator
+from pydantic import AfterValidator, BeforeValidator, model_validator
 
 from mm_eth import erc20, rpc
-from mm_eth.account import address_from_private, is_address
-from mm_eth.cli import calcs, cli_utils, print_helpers, rpc_helpers, validators
+from mm_eth.cli import cli_utils, print_helpers, rpc_helpers
+from mm_eth.cli.calcs import calc_eth_expression
 from mm_eth.cli.validators import Validators
 from mm_eth.utils import from_wei_str
 
 
+# noinspection DuplicatedCode
 class Config(BaseConfig):
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
     chain_id: int
-    routes: Annotated[list[TxRoute], BeforeValidator(Validators.routes(is_address, to_lower=True))]
-    routes_from_file: Path | None = None
-    routes_to_file: Path | None = None
-    private_keys: Annotated[
-        AddressToPrivate, Field(default_factory=AddressToPrivate), BeforeValidator(Validators.private_keys(address_from_private))
-    ]
-    private_keys_file: Path | None = None
-    token: str
+    routes: Annotated[list[TxRoute], BeforeValidator(Validators.eth_routes())]
+    private_keys: Annotated[AddressToPrivate, BeforeValidator(Validators.eth_private_keys())]
+    token: Annotated[str, AfterValidator(Validators.eth_address())]
     decimals: int
-    max_fee_per_gas: str
-    max_fee_per_gas_limit: str | None = None
-    max_priority_fee_per_gas: str
-    value: str
-    value_min_limit: str | None = None
-    gas: str
-    delay: str | None = None  # in seconds
+    max_fee: Annotated[str, AfterValidator(Validators.valid_eth_expression("base_fee"))]
+    priority_fee: Annotated[str, AfterValidator(Validators.valid_eth_expression())]
+    max_fee_limit: Annotated[str | None, AfterValidator(Validators.valid_eth_expression())] = None
+    value: Annotated[str, AfterValidator(Validators.valid_token_expression("balance"))]
+    value_min_limit: Annotated[str | None, AfterValidator(Validators.valid_token_expression())] = None
+    gas: Annotated[str, AfterValidator(Validators.valid_eth_expression("estimate"))]
+    delay: Annotated[str | None, AfterValidator(Validators.valid_calc_decimal_value())] = None  # in seconds
     round_ndigits: int = 5
     log_debug: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
     log_info: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
@@ -43,50 +39,10 @@ class Config(BaseConfig):
     def from_addresses(self) -> list[str]:
         return [r.from_address for r in self.routes]
 
-    # noinspection DuplicatedCode
     @model_validator(mode="after")
     def final_validator(self) -> Self:
-        # routes_files
-        if self.routes_from_file and self.routes_to_file:
-            self.routes += TxRoute.from_files(self.routes_from_file, self.routes_to_file, is_address)
-        if not self.routes:
-            raise ValueError("routes is empty")
-
-        # load private keys from file
-        if self.private_keys_file:
-            self.private_keys.update(AddressToPrivate.from_file(self.private_keys_file, address_from_private))
-
-        # check all private keys exist
         if not self.private_keys.contains_all_addresses(self.from_addresses):
             raise ValueError("private keys are not set for all addresses")
-
-        # max_fee_per_gas
-        if not validators.is_valid_calc_var_value(self.max_fee_per_gas, "base"):
-            raise ValueError(f"wrong max_fee_per_gas: {self.max_fee_per_gas}")
-
-        # max_fee_per_gas_limit
-        if not validators.is_valid_calc_var_value(self.max_fee_per_gas_limit, "base"):
-            raise ValueError(f"wrong max_fee_per_gas_limit: {self.max_fee_per_gas_limit}")
-
-        # max_priority_fee_per_gas
-        if not validators.is_valid_calc_var_value(self.max_priority_fee_per_gas):
-            raise ValueError(f"wrong max_priority_fee_per_gas: {self.max_priority_fee_per_gas}")
-
-        # value
-        if not validators.is_valid_calc_var_value(self.value, "balance", decimals=self.decimals):
-            raise ValueError(f"wrong value: {self.value}")
-
-        # value_min_limit
-        if not validators.is_valid_calc_var_value(self.value_min_limit, decimals=self.decimals):
-            raise ValueError(f"wrong value_min_limit: {self.value_min_limit}")
-
-        # gas
-        if not validators.is_valid_calc_var_value(self.gas, "estimate"):
-            raise ValueError(f"wrong gas: {self.gas}")
-
-        # delay
-        if not validators.is_valid_calc_decimal_value(self.delay):
-            raise ValueError(f"wrong delay: {self.delay}")
 
         return self
 
@@ -103,7 +59,7 @@ def run(
 ) -> None:
     config = Config.read_config_or_exit(config_path)
     if print_config:
-        config.print_and_exit({"private_key"})
+        config.print_and_exit({"private_keys"})
 
     mm_crypto_utils.init_logger(debug, config.log_debug, config.log_info)
     rpc_helpers.check_nodes_for_chain_id(config.nodes, config.chain_id)
@@ -131,7 +87,7 @@ def run(
 # noinspection DuplicatedCode
 def _run_transfers(config: Config, *, no_receipt: bool, emulate: bool) -> None:
     logger.info(f"started at {utc_now()} UTC")
-    logger.debug(f"config={config.model_dump(exclude={'private_keys', 'addresses_map'}) | {'version': cli_utils.get_version()}}")
+    logger.debug(f"config={config.model_dump(exclude={'private_keys'}) | {'version': cli_utils.get_version()}}")
     for i, route in enumerate(config.routes):
         _transfer(
             from_address=route.from_address, to_address=route.to_address, config=config, no_receipt=no_receipt, emulate=emulate
@@ -151,19 +107,19 @@ def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt:
     if nonce is None:
         return
 
-    # get max_fee_per_gas
-    max_fee_per_gas = rpc_helpers.calc_max_fee(config.nodes, config.max_fee_per_gas, log_prefix)
-    if max_fee_per_gas is None:
+    # get max_fee
+    max_fee = rpc_helpers.calc_max_fee(config.nodes, config.max_fee, log_prefix)
+    if max_fee is None:
         return
 
-    # check max_fee_per_gas_limit
-    if rpc_helpers.is_max_fee_limit_exceeded(max_fee_per_gas, config.max_fee_per_gas_limit, log_prefix):
+    # check max_fee_limit
+    if rpc_helpers.is_max_fee_limit_exceeded(max_fee, config.max_fee_limit, log_prefix):
         return
 
     # get gas
     gas = rpc_helpers.calc_gas(
         nodes=config.nodes,
-        gas=config.gas,
+        gas_expression=config.gas,
         from_address=from_address,
         to_address=config.token,
         data=erc20.encode_transfer_input_data(to_address, 1234),
@@ -173,9 +129,9 @@ def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt:
         return
 
     # get value
-    value = rpc_helpers.calc_erc20_value(
+    value = rpc_helpers.calc_erc20_value_for_address(
         nodes=config.nodes,
-        value_str=config.value,
+        value_expression=config.value,
         wallet_address=from_address,
         token_address=config.token,
         decimals=config.decimals,
@@ -185,41 +141,39 @@ def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt:
         return
 
     # value_min_limit
-    if calcs.is_value_less_min_limit(
-        config.value_min_limit,
-        value,
-        "t",
-        decimals=config.decimals,
-        log_prefix=log_prefix,
-    ):
-        return
+    if config.value_min_limit is not None:
+        value_min_limit = mm_crypto_utils.calc_int_expression(config.value_min_limit, suffix_decimals={"t": config.decimals})
+        if value < value_min_limit:
+            value_str = from_wei_str(value, "t", config.round_ndigits, decimals=config.decimals)
+            logger.info(f"{log_prefix}value<value_min_limit, value={value_str}")
+            return
 
-    max_priority_fee_per_gas = calcs.calc_var_value(config.max_priority_fee_per_gas)
-    tx_params = {
-        "nonce": nonce,
-        "max_fee_per_gas": max_fee_per_gas,
-        "max_priority_fee_per_gas": max_priority_fee_per_gas,
-        "gas": gas,
-        "value": value,
-        "to": to_address,
-        "chain_id": config.chain_id,
-    }
+    priority_fee = calc_eth_expression(config.priority_fee)
 
     # emulate?
     if emulate:
         msg = f"{log_prefix}: emulate,"
         msg += f" value={from_wei_str(value, 't', decimals=config.decimals, round_ndigits=config.round_ndigits)},"
-        msg += f" max_fee_per_gas={from_wei_str(max_fee_per_gas, 'gwei', config.round_ndigits)},"
-        msg += f" max_priority_fee_per_gas={from_wei_str(max_priority_fee_per_gas, 'gwei', config.round_ndigits)},"
+        msg += f" max_fee={from_wei_str(max_fee, 'gwei', config.round_ndigits)},"
+        msg += f" priority_fee={from_wei_str(priority_fee, 'gwei', config.round_ndigits)},"
         msg += f" gas={gas}"
         logger.info(msg)
         return
 
-    logger.debug(f"{log_prefix}: tx_params={tx_params}")
+    debug_tx_params = {
+        "nonce": nonce,
+        "max_fee": max_fee,
+        "priority_fee": priority_fee,
+        "gas": gas,
+        "value": value,
+        "to": to_address,
+        "chain_id": config.chain_id,
+    }
+    logger.debug(f"{log_prefix}: tx_params={debug_tx_params}")
     signed_tx = erc20.sign_transfer_tx(
         nonce=nonce,
-        max_fee_per_gas=max_fee_per_gas,
-        max_priority_fee_per_gas=max_priority_fee_per_gas,
+        max_fee_per_gas=max_fee,
+        max_priority_fee_per_gas=priority_fee,
         gas_limit=gas,
         private_key=config.private_keys[from_address],
         chain_id=config.chain_id,

@@ -7,32 +7,28 @@ import mm_crypto_utils
 from loguru import logger
 from mm_crypto_utils import AddressToPrivate, TxRoute
 from mm_std import BaseConfig, Err, Ok, utc_now
-from pydantic import AfterValidator, BeforeValidator, Field, model_validator
+from pydantic import AfterValidator, BeforeValidator, model_validator
 
 from mm_eth import rpc
-from mm_eth.account import address_from_private, is_address
-from mm_eth.cli import calcs, cli_utils, print_helpers, rpc_helpers
-from mm_eth.cli.validators import Validators
+from mm_eth.cli import cli_utils, print_helpers, rpc_helpers
+from mm_eth.cli.calcs import calc_eth_expression
+from mm_eth.cli.validators import Validators as Validators
 from mm_eth.tx import sign_tx
 from mm_eth.utils import from_wei_str
 
 
+# noinspection DuplicatedCode
 class Config(BaseConfig):
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
     chain_id: int
-    routes: Annotated[list[TxRoute], BeforeValidator(Validators.routes(is_address, to_lower=True))]
-    routes_from_file: Path | None = None
-    routes_to_file: Path | None = None
-    private_keys: Annotated[
-        AddressToPrivate, Field(default_factory=AddressToPrivate), BeforeValidator(Validators.private_keys(address_from_private))
-    ]
-    private_keys_file: Path | None = None
-    max_fee: Annotated[str, AfterValidator(Validators.valid_calc_value("base_fee"))]
-    priority_fee: Annotated[str, AfterValidator(Validators.valid_calc_value())]
-    max_fee_limit: Annotated[str | None, AfterValidator(Validators.valid_calc_value())] = None
-    value: Annotated[str, AfterValidator(Validators.valid_calc_value("balance"))]
-    value_min_limit: Annotated[str | None, AfterValidator(Validators.valid_calc_value())] = None
-    gas: Annotated[str, AfterValidator(Validators.valid_calc_value("estimate"))]
+    routes: Annotated[list[TxRoute], BeforeValidator(Validators.eth_routes())]
+    private_keys: Annotated[AddressToPrivate, BeforeValidator(Validators.eth_private_keys())]
+    max_fee: Annotated[str, AfterValidator(Validators.valid_eth_expression("base_fee"))]
+    priority_fee: Annotated[str, AfterValidator(Validators.valid_eth_expression())]
+    max_fee_limit: Annotated[str | None, AfterValidator(Validators.valid_eth_expression())] = None
+    value: Annotated[str, AfterValidator(Validators.valid_eth_expression("balance"))]
+    value_min_limit: Annotated[str | None, AfterValidator(Validators.valid_eth_expression())] = None
+    gas: Annotated[str, AfterValidator(Validators.valid_eth_expression("estimate"))]
     delay: Annotated[str | None, AfterValidator(Validators.valid_calc_decimal_value())] = None  # in seconds
     round_ndigits: int = 5
     log_debug: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
@@ -42,18 +38,8 @@ class Config(BaseConfig):
     def from_addresses(self) -> list[str]:
         return [r.from_address for r in self.routes]
 
-    # noinspection DuplicatedCode
     @model_validator(mode="after")
     def final_validator(self) -> Self:
-        # routes
-        if self.routes_from_file and self.routes_to_file:
-            self.routes += TxRoute.from_files(self.routes_from_file, self.routes_to_file, is_address)
-        if not self.routes:
-            raise ValueError("routes is empty")
-
-        # private keys
-        if self.private_keys_file:
-            self.private_keys.update(AddressToPrivate.from_file(self.private_keys_file, address_from_private))
         if not self.private_keys.contains_all_addresses(self.from_addresses):
             raise ValueError("private keys are not set for all addresses")
 
@@ -116,7 +102,7 @@ def _transfer(*, route: TxRoute, config: Config, no_receipt: bool, emulate: bool
     # get gas
     gas = rpc_helpers.calc_gas(
         nodes=config.nodes,
-        gas=config.gas,
+        gas_expression=config.gas,
         from_address=route.from_address,
         to_address=route.to_address,
         value=123,
@@ -126,9 +112,9 @@ def _transfer(*, route: TxRoute, config: Config, no_receipt: bool, emulate: bool
         return
 
     # get value
-    value = rpc_helpers.calc_eth_value(
+    value = rpc_helpers.calc_eth_value_for_address(
         nodes=config.nodes,
-        value_str=config.value,
+        value_expression=config.value,
         address=route.from_address,
         gas=gas,
         max_fee=max_fee,
@@ -138,10 +124,13 @@ def _transfer(*, route: TxRoute, config: Config, no_receipt: bool, emulate: bool
         return
 
     # value_min_limit
-    if calcs.is_value_less_min_limit(config.value_min_limit, value, "eth", log_prefix=log_prefix):
-        return
+    if config.value_min_limit is not None:
+        value_min_limit = calc_eth_expression(config.value_min_limit)
+        if value < value_min_limit:
+            logger.info(f"{log_prefix}value<value_min_limit, value={from_wei_str(value, 'eth', config.round_ndigits)}")
+            return
 
-    priority_fee = calcs.calc_var_value(config.priority_fee)
+    priority_fee = calc_eth_expression(config.priority_fee)
 
     # emulate?
     if emulate:

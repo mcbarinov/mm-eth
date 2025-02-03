@@ -1,47 +1,37 @@
 from collections.abc import Callable
-from decimal import Decimal
 
-import mm_crypto_utils
-from mm_crypto_utils import ConfigValidators
+from mm_crypto_utils import AddressToPrivate, ConfigValidators, TxRoute
+
+from mm_eth.account import address_from_private, is_address
+from mm_eth.constants import SUFFIX_DECIMALS
 
 from . import calcs
 
 
 class Validators(ConfigValidators):
     @staticmethod
-    def valid_calc_value(base_name: str = "var", decimals: int | None = None) -> Callable[[str], str]:
-        def validator(v: str) -> str:
-            calcs.calc_var_value(v, var_value=123, var_name=base_name, decimals=decimals)
-            return v
-
-        return validator
+    def valid_eth_expression(var_name: str | None = None) -> Callable[[str], str]:
+        return ConfigValidators.valid_calc_int_expression(var_name, SUFFIX_DECIMALS)
 
     @staticmethod
-    def valid_calc_decimal_value() -> Callable[[str], Decimal]:
-        def validator(v: str) -> Decimal:
-            return mm_crypto_utils.calc_decimal_value(v)
+    def valid_token_expression(var_name: str | None = None) -> Callable[[str], str]:
+        return ConfigValidators.valid_calc_int_expression(var_name, {"t": 6})
 
-        return validator
+    @staticmethod
+    def eth_routes() -> Callable[[str | None], list[TxRoute]]:
+        return ConfigValidators.routes(is_address, to_lower=True)
 
+    @staticmethod
+    def eth_private_keys() -> Callable[[str | list[str] | None], AddressToPrivate]:
+        return ConfigValidators.private_keys(address_from_private)
 
-def is_valid_calc_var_value(value: str | None, base_name: str = "var", decimals: int | None = None) -> bool:
-    if value is None:
-        return True  # check for None on BaseModel.field type level
-    try:
-        calcs.calc_var_value(value, var_value=123, var_name=base_name, decimals=decimals)
-        return True  # noqa: TRY300
-    except ValueError:
-        return False
+    @staticmethod
+    def eth_address() -> Callable[[str], str]:
+        return ConfigValidators.address(is_address, to_lower=True)
 
-
-def is_valid_calc_decimal_value(value: str | None) -> bool:
-    if value is None:
-        return True  # check for None on BaseModel.field type level
-    try:
-        mm_crypto_utils.calc_decimal_value(value)
-        return True  # noqa: TRY300
-    except ValueError:
-        return False
+    @staticmethod
+    def eth_addresses(unique: bool) -> Callable[[str | list[str] | None], list[str]]:
+        return ConfigValidators.addresses(unique, to_lower=True, is_address=is_address)
 
 
 def is_valid_calc_function_args(value: str | None) -> bool:

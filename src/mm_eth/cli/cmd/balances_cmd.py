@@ -7,14 +7,13 @@ from rich.live import Live
 from rich.table import Table
 
 from mm_eth import erc20, rpc
-from mm_eth.account import is_address
 from mm_eth.cli.validators import Validators
 from mm_eth.utils import from_token_wei_str, from_wei_str
 
 
 class Config(BaseConfig):
-    addresses: Annotated[list[str], BeforeValidator(Validators.addresses(unique=True, lower=True, is_address=is_address))]
-    tokens: Annotated[list[str], BeforeValidator(Validators.addresses(unique=True, lower=True, is_address=is_address))]
+    addresses: Annotated[list[str], BeforeValidator(Validators.eth_addresses(unique=True))]
+    tokens: Annotated[list[str], BeforeValidator(Validators.eth_addresses(unique=True))]
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
     round_ndigits: int = 5
 
