@@ -12,6 +12,7 @@ from pydantic import AfterValidator, BeforeValidator, model_validator
 from mm_eth import rpc
 from mm_eth.cli import cli_utils, print_helpers, rpc_helpers
 from mm_eth.cli.calcs import calc_eth_expression
+from mm_eth.cli.cli_utils import BaseConfigParams
 from mm_eth.cli.validators import Validators as Validators
 from mm_eth.tx import sign_tx
 from mm_eth.utils import from_wei_str
@@ -46,36 +47,35 @@ class Config(BaseConfig):
         return self
 
 
-def run(
-    config_path: str,
-    *,
-    print_balances: bool,
-    print_config: bool,
-    debug: bool,
-    no_receipt: bool,
-    emulate: bool,
-) -> None:
-    config = Config.read_config_or_exit(config_path)
-    if print_config:
+class TransferEthCmdParams(BaseConfigParams):
+    print_balances: bool
+    debug: bool
+    no_receipt: bool
+    emulate: bool
+
+
+def run(cli_params: TransferEthCmdParams) -> None:
+    config = Config.read_toml_config_or_exit(cli_params.config_path)
+    if cli_params.print_config_and_exit:
         config.print_and_exit({"private_keys"})
 
-    mm_crypto_utils.init_logger(debug, config.log_debug, config.log_info)
+    mm_crypto_utils.init_logger(cli_params.debug, config.log_debug, config.log_info)
     rpc_helpers.check_nodes_for_chain_id(config.nodes, config.chain_id)
 
-    if print_balances:
+    if cli_params.print_balances:
         print_helpers.print_balances(config.nodes, config.from_addresses, round_ndigits=config.round_ndigits)
         sys.exit(0)
 
-    return _run_transfers(config, no_receipt=no_receipt, emulate=emulate)
+    return _run_transfers(config, cli_params)
 
 
 # noinspection DuplicatedCode
-def _run_transfers(config: Config, *, no_receipt: bool, emulate: bool) -> None:
+def _run_transfers(config: Config, cli_params: TransferEthCmdParams) -> None:
     logger.info(f"started at {utc_now()} UTC")
     logger.debug(f"config={config.model_dump(exclude={'private_keys'}) | {'version': cli_utils.get_version()}}")
     for i, route in enumerate(config.routes):
-        _transfer(route=route, config=config, no_receipt=no_receipt, emulate=emulate)
-        if not emulate and config.delay is not None and i < len(config.routes) - 1:
+        _transfer(route, config, cli_params)
+        if not cli_params.emulate and config.delay is not None and i < len(config.routes) - 1:
             delay_value = mm_crypto_utils.calc_decimal_value(config.delay)
             logger.debug(f"delay {delay_value} seconds")
             time.sleep(float(delay_value))
@@ -83,7 +83,7 @@ def _run_transfers(config: Config, *, no_receipt: bool, emulate: bool) -> None:
 
 
 # noinspection DuplicatedCode
-def _transfer(*, route: TxRoute, config: Config, no_receipt: bool, emulate: bool) -> None:
+def _transfer(route: TxRoute, config: Config, cli_params: TransferEthCmdParams) -> None:
     log_prefix = f"{route.from_address}->{route.to_address}"
     # get nonce
     nonce = rpc_helpers.get_nonce(config.nodes, route.from_address, log_prefix)
@@ -133,7 +133,7 @@ def _transfer(*, route: TxRoute, config: Config, no_receipt: bool, emulate: bool
     priority_fee = calc_eth_expression(config.priority_fee)
 
     # emulate?
-    if emulate:
+    if cli_params.emulate:
         msg = f"{log_prefix}: emulate, value={from_wei_str(value, 'eth', config.round_ndigits)},"
         msg += f" max_fee={from_wei_str(max_fee, 'gwei', config.round_ndigits)},"
         msg += f" priority_fee={from_wei_str(priority_fee, 'gwei', config.round_ndigits)},"
@@ -167,7 +167,7 @@ def _transfer(*, route: TxRoute, config: Config, no_receipt: bool, emulate: bool
         return
     tx_hash = res.ok
 
-    if no_receipt:
+    if cli_params.no_receipt:
         msg = f"{log_prefix}: tx_hash={tx_hash}, value={from_wei_str(value, 'ether', round_ndigits=config.round_ndigits)}"
         logger.info(msg)
     else:

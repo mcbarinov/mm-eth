@@ -5,6 +5,7 @@ from mm_std import BaseConfig, Err, print_plain
 from pydantic import StrictStr
 
 from mm_eth import abi, rpc
+from mm_eth.cli.cli_utils import BaseConfigParams
 
 
 class Config(BaseConfig):
@@ -15,9 +16,13 @@ class Config(BaseConfig):
     node: str
 
 
-def run(config_path: str, print_config: bool) -> None:
-    config = Config.read_config_or_exit(config_path)
-    if print_config:
+class CallContractCmdParams(BaseConfigParams):
+    pass
+
+
+def run(cli_params: CallContractCmdParams) -> None:
+    config = Config.read_toml_config_or_exit(cli_params.config_path)
+    if cli_params.print_config_and_exit:
         config.print_and_exit()
 
     input_data = abi.encode_function_input_by_signature(

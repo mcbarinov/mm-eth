@@ -25,6 +25,12 @@ from .cmd import (
     tx_cmd,
     vault_cmd,
 )
+from .cmd.balances_cmd import BalancesCmdParams
+from .cmd.call_contract_cmd import CallContractCmdParams
+from .cmd.deploy_cmd import DeployCmdParams
+from .cmd.send_contract_cmd import SendContractCmdParams
+from .cmd.transfer_erc20_cmd import TransferErc20CmdParams
+from .cmd.transfer_eth_cmd import TransferEthCmdParams
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_enable=False, add_completion=False)
 
@@ -137,7 +143,7 @@ def tx_command(
 
 @app.command(name="transfer-eth", help="Transfer eth / base token from one or many accounts")
 def transfer_eth_command(
-    config_path: str,
+    config_path: Path,
     print_balances: bool = typer.Option(False, "--balances", "-b", help="Print balances and exit"),
     print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
     emulate: bool = typer.Option(False, "--emulate", "-e", help="Emulate transaction posting"),
@@ -145,18 +151,20 @@ def transfer_eth_command(
     debug: bool = typer.Option(False, "--debug", "-d", help="Print debug info"),
 ) -> None:
     transfer_eth_cmd.run(
-        config_path,
-        print_balances=print_balances,
-        print_config=print_config,
-        debug=debug,
-        no_receipt=no_receipt,
-        emulate=emulate,
+        TransferEthCmdParams(
+            config_path=config_path,
+            print_balances=print_balances,
+            print_config_and_exit=print_config,
+            debug=debug,
+            no_receipt=no_receipt,
+            emulate=emulate,
+        )
     )
 
 
 @app.command(name="transfer-erc20", help="Transfer ERC20 token from one or many accounts")
 def transfer_erc20_command(
-    config_path: str,
+    config_path: Path,
     print_balances: bool = typer.Option(False, "--balances", "-b", help="Print balances and exit"),
     print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
     emulate: bool = typer.Option(False, "--emulate", "-e", help="Emulate transaction posting"),
@@ -164,18 +172,20 @@ def transfer_erc20_command(
     debug: bool = typer.Option(False, "--debug", "-d", help="Print debug info"),
 ) -> None:
     transfer_erc20_cmd.run(
-        config_path,
-        print_balances=print_balances,
-        print_config=print_config,
-        debug=debug,
-        no_receipt=no_receipt,
-        emulate=emulate,
+        TransferErc20CmdParams(
+            config_path=config_path,
+            print_balances=print_balances,
+            print_config_and_exit=print_config,
+            debug=debug,
+            no_receipt=no_receipt,
+            emulate=emulate,
+        )
     )
 
 
 @app.command(name="send-contract", help="Send transactions to a contract")
 def send_contract_command(
-    config_path: str,
+    config_path: Path,
     print_balances: bool = typer.Option(False, "--balances", "-b", help="Print balances and exit"),
     print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
     emulate: bool = typer.Option(False, "--emulate", "-e", help="Emulate transaction posting"),
@@ -183,39 +193,41 @@ def send_contract_command(
     debug: bool = typer.Option(False, "--debug", "-d", help="Print debug info"),
 ) -> None:
     send_contract_cmd.run(
-        config_path,
-        print_balances=print_balances,
-        print_config=print_config,
-        debug=debug,
-        no_receipt=no_receipt,
-        emulate=emulate,
+        SendContractCmdParams(
+            config_path=config_path,
+            print_balances=print_balances,
+            print_config_and_exit=print_config,
+            debug=debug,
+            no_receipt=no_receipt,
+            emulate=emulate,
+        )
     )
 
 
 @app.command(name="balances", help="Print base and ERC20 token balances")
 def balances_command(
-    config_path: str,
-    print_config: bool = typer.Option(False, "--config", "-c", help="Print config only and exit"),
+    config_path: Path,
+    print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
     nonce: bool = typer.Option(False, "--nonce", "-n", help="Print nonce also"),
     wei: bool = typer.Option(False, "--wei", "-w", help="Show balances in WEI"),
 ) -> None:
-    balances_cmd.run(config_path, print_config, wei, nonce)
+    balances_cmd.run(BalancesCmdParams(config_path=config_path, print_config_and_exit=print_config, wei=wei, show_nonce=nonce))
 
 
 @app.command(name="call-contract", help="Call a method on a contract")
 def call_contract_command(
-    config_path: str,
-    print_config: bool = typer.Option(False, "--config", "-c", help="Print config only and exit"),
+    config_path: Path,
+    print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
 ) -> None:
-    call_contract_cmd.run(config_path, print_config)
+    call_contract_cmd.run(CallContractCmdParams(config_path=config_path, print_config_and_exit=print_config))
 
 
 @app.command(name="deploy", help="Deploy a smart contract onchain")
 def deploy_command(
-    config_path: str,
-    print_config: bool = typer.Option(False, "--config", "-c", help="Print config only and exit"),
+    config_path: Path,
+    print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
 ) -> None:
-    deploy_cmd.run(config_path, print_config=print_config)
+    deploy_cmd.run(DeployCmdParams(config_path=config_path, print_config_and_exit=print_config))
 
 
 @app.command(name="config-example", help="Print an example of config for a command")

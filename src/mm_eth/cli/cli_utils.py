@@ -1,4 +1,7 @@
 import importlib.metadata
+from pathlib import Path
+
+from pydantic import BaseModel
 
 
 def get_version() -> str:
@@ -22,3 +25,8 @@ def public_rpc_url(url: str | None) -> str:
             return "https://sepolia.base.org"
         case _:
             return url
+
+
+class BaseConfigParams(BaseModel):
+    config_path: Path
+    print_config_and_exit: bool

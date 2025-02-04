@@ -7,6 +7,7 @@ from rich.live import Live
 from rich.table import Table
 
 from mm_eth import erc20, rpc
+from mm_eth.cli.cli_utils import BaseConfigParams
 from mm_eth.cli.validators import Validators
 from mm_eth.utils import from_token_wei_str, from_wei_str
 
@@ -25,18 +26,23 @@ class Token:
     symbol: str
 
 
-def run(config_path: str, print_config: bool, wei: bool, show_nonce: bool) -> None:
-    config = Config.read_config_or_exit(config_path)
-    if print_config:
+class BalancesCmdParams(BaseConfigParams):
+    wei: bool
+    show_nonce: bool
+
+
+def run(params: BalancesCmdParams) -> None:
+    config = Config.read_toml_config_or_exit(params.config_path)
+    if params.print_config_and_exit:
         config.print_and_exit()
 
     tokens = _get_tokens_info(config)
 
     table = Table(title="balances")
     table.add_column("address")
-    if show_nonce:
+    if params.show_nonce:
         table.add_column("nonce")
-    table.add_column("wei" if wei else "eth")
+    table.add_column("wei" if params.wei else "eth")
     for t in tokens:
         table.add_column(t.symbol)
 
@@ -45,13 +51,13 @@ def run(config_path: str, print_config: bool, wei: bool, show_nonce: bool) -> No
     with Live(table, refresh_per_second=0.5):
         for address in config.addresses:
             row = [address]
-            if show_nonce:
+            if params.show_nonce:
                 row.append(str(rpc.eth_get_transaction_count(config.nodes, address, attempts=5).ok_or_err()))
 
             base_balance_res = rpc.eth_get_balance(config.nodes, address, attempts=5)
             if isinstance(base_balance_res, Ok):
                 base_sum += base_balance_res.ok
-                if wei:
+                if params.wei:
                     row.append(str(base_balance_res.ok))
                 else:
                     row.append(
@@ -64,7 +70,7 @@ def run(config_path: str, print_config: bool, wei: bool, show_nonce: bool) -> No
                 token_balance_res = erc20.get_balance(config.nodes, t.address, address, attempts=5)
                 if isinstance(token_balance_res, Ok):
                     token_sum[t.address] += token_balance_res.ok
-                    if wei:
+                    if params.wei:
                         row.append(str(token_balance_res.ok))
                     else:
                         row.append(
@@ -80,9 +86,9 @@ def run(config_path: str, print_config: bool, wei: bool, show_nonce: bool) -> No
             table.add_row(*row)
 
         sum_row = ["sum"]
-        if show_nonce:
+        if params.show_nonce:
             sum_row.append("")
-        if wei:
+        if params.wei:
             sum_row.append(str(base_sum))
             sum_row.extend([str(token_sum[t.address]) for t in tokens])
         else:

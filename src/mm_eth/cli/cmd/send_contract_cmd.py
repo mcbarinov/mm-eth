@@ -13,6 +13,7 @@ from pydantic import AfterValidator, BeforeValidator, StrictStr, model_validator
 from mm_eth import abi, rpc
 from mm_eth.cli import calcs, cli_utils, print_helpers, rpc_helpers, validators
 from mm_eth.cli.calcs import calc_eth_expression
+from mm_eth.cli.cli_utils import BaseConfigParams
 from mm_eth.cli.validators import Validators
 from mm_eth.tx import sign_tx
 from mm_eth.utils import from_wei_str
@@ -54,38 +55,37 @@ class Config(BaseConfig):
         return self
 
 
+class SendContractCmdParams(BaseConfigParams):
+    print_balances: bool
+    debug: bool
+    no_receipt: bool
+    emulate: bool
+
+
 # noinspection DuplicatedCode
-def run(
-    config_path: str,
-    *,
-    print_balances: bool,
-    print_config: bool,
-    debug: bool,
-    no_receipt: bool,
-    emulate: bool,
-) -> None:
-    config = Config.read_config_or_exit(config_path)
-    if print_config:
+def run(cli_params: SendContractCmdParams) -> None:
+    config = Config.read_toml_config_or_exit(cli_params.config_path)
+    if cli_params.print_config_and_exit:
         config.print_and_exit({"private_key"})
 
-    mm_crypto_utils.init_logger(debug, config.log_debug, config.log_info)
+    mm_crypto_utils.init_logger(cli_params.debug, config.log_debug, config.log_info)
 
     rpc_helpers.check_nodes_for_chain_id(config.nodes, config.chain_id)
 
-    if print_balances:
+    if cli_params.print_balances:
         print_helpers.print_balances(config.nodes, config.from_addresses, round_ndigits=config.round_ndigits)
         sys.exit(0)
 
-    _run_transfers(config, no_receipt=no_receipt, emulate=emulate)
+    _run_transfers(config, cli_params)
 
 
 # noinspection DuplicatedCode
-def _run_transfers(config: Config, *, no_receipt: bool, emulate: bool) -> None:
+def _run_transfers(config: Config, cli_params: SendContractCmdParams) -> None:
     logger.info(f"started at {utc_now()} UTC")
     logger.debug(f"config={config.model_dump(exclude={'private_keys'}) | {'version': cli_utils.get_version()}}")
     for i, from_address in enumerate(config.from_addresses):
-        _transfer(from_address=from_address, config=config, no_receipt=no_receipt, emulate=emulate)
-        if not emulate and config.delay is not None and i < len(config.from_addresses) - 1:
+        _transfer(from_address, config, cli_params)
+        if not cli_params.emulate and config.delay is not None and i < len(config.from_addresses) - 1:
             delay_value = mm_crypto_utils.calc_decimal_value(config.delay)
             logger.debug(f"delay {delay_value} seconds")
             time.sleep(float(delay_value))
@@ -93,7 +93,7 @@ def _run_transfers(config: Config, *, no_receipt: bool, emulate: bool) -> None:
 
 
 # noinspection DuplicatedCode
-def _transfer(*, from_address: str, config: Config, no_receipt: bool, emulate: bool) -> None:
+def _transfer(from_address: str, config: Config, cli_params: SendContractCmdParams) -> None:
     log_prefix = f"{from_address}"
     # get nonce
     nonce = rpc_helpers.get_nonce(config.nodes, from_address, log_prefix)
@@ -143,7 +143,7 @@ def _transfer(*, from_address: str, config: Config, no_receipt: bool, emulate: b
             return
 
     # emulate?
-    if emulate:
+    if cli_params.emulate:
         msg = f"{log_prefix}: emulate,"
         if value is not None:
             msg += f" value={from_wei_str(value, 'eth', config.round_ndigits)},"
@@ -182,7 +182,7 @@ def _transfer(*, from_address: str, config: Config, no_receipt: bool, emulate: b
         return
     tx_hash = res.ok
 
-    if no_receipt:
+    if cli_params.no_receipt:
         msg = f"{log_prefix}: tx_hash={tx_hash}"
         logger.info(msg)
     else:

@@ -1,10 +1,10 @@
 [project]
 name = "mm-eth"
-version = "0.2.6"
+version = "0.3.0"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
-    "mm-crypto-utils>=0.0.20",
+    "mm-crypto-utils>=0.1.2",
     "websocket-client~=1.8.0",
     "web3~=7.7.0",
     "typer>=0.15.1",

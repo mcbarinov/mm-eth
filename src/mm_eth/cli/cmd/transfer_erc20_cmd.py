@@ -12,6 +12,7 @@ from pydantic import AfterValidator, BeforeValidator, model_validator
 from mm_eth import erc20, rpc
 from mm_eth.cli import cli_utils, print_helpers, rpc_helpers
 from mm_eth.cli.calcs import calc_eth_expression
+from mm_eth.cli.cli_utils import BaseConfigParams
 from mm_eth.cli.validators import Validators
 from mm_eth.utils import from_wei_str
 
@@ -47,21 +48,20 @@ class Config(BaseConfig):
         return self
 
 
+class TransferErc20CmdParams(BaseConfigParams):
+    print_balances: bool
+    debug: bool
+    no_receipt: bool
+    emulate: bool
+
+
 # noinspection DuplicatedCode
-def run(
-    config_path: str,
-    *,
-    print_balances: bool,
-    print_config: bool,
-    debug: bool,
-    no_receipt: bool,
-    emulate: bool,
-) -> None:
-    config = Config.read_config_or_exit(config_path)
-    if print_config:
+def run(cli_params: TransferErc20CmdParams) -> None:
+    config = Config.read_toml_config_or_exit(cli_params.config_path)
+    if cli_params.print_config_and_exit:
         config.print_and_exit({"private_keys"})
 
-    mm_crypto_utils.init_logger(debug, config.log_debug, config.log_info)
+    mm_crypto_utils.init_logger(cli_params.debug, config.log_debug, config.log_info)
     rpc_helpers.check_nodes_for_chain_id(config.nodes, config.chain_id)
 
     # check decimals
@@ -71,7 +71,7 @@ def run(
     if res.ok != config.decimals:
         fatal(f"config.decimals is wrong: {config.decimals} != {res.ok}")
 
-    if print_balances:
+    if cli_params.print_balances:
         print_helpers.print_balances(
             config.nodes,
             config.from_addresses,
@@ -81,18 +81,16 @@ def run(
         )
         sys.exit(0)
 
-    return _run_transfers(config, no_receipt=no_receipt, emulate=emulate)
+    return _run_transfers(config, cli_params)
 
 
 # noinspection DuplicatedCode
-def _run_transfers(config: Config, *, no_receipt: bool, emulate: bool) -> None:
+def _run_transfers(config: Config, cli_params: TransferErc20CmdParams) -> None:
     logger.info(f"started at {utc_now()} UTC")
     logger.debug(f"config={config.model_dump(exclude={'private_keys'}) | {'version': cli_utils.get_version()}}")
     for i, route in enumerate(config.routes):
-        _transfer(
-            from_address=route.from_address, to_address=route.to_address, config=config, no_receipt=no_receipt, emulate=emulate
-        )
-        if not emulate and config.delay is not None and i < len(config.routes) - 1:
+        _transfer(route, config, cli_params)
+        if not cli_params.emulate and config.delay is not None and i < len(config.routes) - 1:
             delay_value = mm_crypto_utils.calc_decimal_value(config.delay)
             logger.debug(f"delay {delay_value} seconds")
             time.sleep(float(delay_value))
@@ -100,10 +98,10 @@ def _run_transfers(config: Config, *, no_receipt: bool, emulate: bool) -> None:
 
 
 # noinspection DuplicatedCode
-def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt: bool, emulate: bool) -> None:
-    log_prefix = f"{from_address}->{to_address}"
+def _transfer(route: TxRoute, config: Config, cli_params: TransferErc20CmdParams) -> None:
+    log_prefix = f"{route.from_address}->{route.to_address}"
     # get nonce
-    nonce = rpc_helpers.get_nonce(config.nodes, from_address, log_prefix)
+    nonce = rpc_helpers.get_nonce(config.nodes, route.from_address, log_prefix)
     if nonce is None:
         return
 
@@ -120,9 +118,9 @@ def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt:
     gas = rpc_helpers.calc_gas(
         nodes=config.nodes,
         gas_expression=config.gas,
-        from_address=from_address,
+        from_address=route.from_address,
         to_address=config.token,
-        data=erc20.encode_transfer_input_data(to_address, 1234),
+        data=erc20.encode_transfer_input_data(route.to_address, 1234),
         log_prefix=log_prefix,
     )
     if gas is None:
@@ -132,7 +130,7 @@ def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt:
     value = rpc_helpers.calc_erc20_value_for_address(
         nodes=config.nodes,
         value_expression=config.value,
-        wallet_address=from_address,
+        wallet_address=route.from_address,
         token_address=config.token,
         decimals=config.decimals,
         log_prefix=log_prefix,
@@ -151,7 +149,7 @@ def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt:
     priority_fee = calc_eth_expression(config.priority_fee)
 
     # emulate?
-    if emulate:
+    if cli_params.emulate:
         msg = f"{log_prefix}: emulate,"
         msg += f" value={from_wei_str(value, 't', decimals=config.decimals, round_ndigits=config.round_ndigits)},"
         msg += f" max_fee={from_wei_str(max_fee, 'gwei', config.round_ndigits)},"
@@ -166,7 +164,7 @@ def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt:
         "priority_fee": priority_fee,
         "gas": gas,
         "value": value,
-        "to": to_address,
+        "to": route.to_address,
         "chain_id": config.chain_id,
     }
     logger.debug(f"{log_prefix}: tx_params={debug_tx_params}")
@@ -175,11 +173,11 @@ def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt:
         max_fee_per_gas=max_fee,
         max_priority_fee_per_gas=priority_fee,
         gas_limit=gas,
-        private_key=config.private_keys[from_address],
+        private_key=config.private_keys[route.from_address],
         chain_id=config.chain_id,
         value=value,
         token_address=config.token,
-        recipient_address=to_address,
+        recipient_address=route.to_address,
     )
     res = rpc.eth_send_raw_transaction(config.nodes, signed_tx.raw_tx, attempts=5)
     if isinstance(res, Err):
@@ -187,7 +185,7 @@ def _transfer(*, from_address: str, to_address: str, config: Config, no_receipt:
         return
     tx_hash = res.ok
 
-    if no_receipt:
+    if cli_params.no_receipt:
         msg = f"{log_prefix}: tx_hash={tx_hash}, value={from_wei_str(value, 't', decimals=config.decimals, round_ndigits=config.round_ndigits)}"  # noqa: E501
         logger.info(msg)
     else:

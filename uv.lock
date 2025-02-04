@@ -726,19 +726,19 @@ wheels = [
 
 [[package]]
 name = "mm-crypto-utils"
-version = "0.0.20"
+version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "mm-std" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b2/19/e08ec034a82ff5e5cbd22e77f0f20bdb364b46573352b7913d791af6db73/mm_crypto_utils-0.0.20-py3-none-any.whl", hash = "sha256:62d88aab56824924c49848273f75b77f4205c06394224a0a66ae267d13ecfabd", size = 7335 },
+    { url = "https://files.pythonhosted.org/packages/49/72/38c081e00cb2809b87f660786c42b7214fb99e0bc9eb3da5e476eb5fcd5b/mm_crypto_utils-0.1.2-py3-none-any.whl", hash = "sha256:078befb3d5d7189cf99309128cdbe27d80c933429c984fc108d2185f4a226768", size = 7334 },
 ]
 
 [[package]]
 name = "mm-eth"
-version = "0.2.5"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "mm-crypto-utils" },
@@ -760,7 +760,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mm-crypto-utils", specifier = ">=0.0.20" },
+    { name = "mm-crypto-utils", specifier = ">=0.1.2" },
     { name = "typer", specifier = ">=0.15.1" },
     { name = "web3", specifier = "~=7.7.0" },
     { name = "websocket-client", specifier = "~=1.8.0" },
@@ -779,7 +779,7 @@ dev = [
 
 [[package]]
 name = "mm-std"
-version = "0.1.15"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -791,7 +791,7 @@ dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/b7/6c713eb013fd2d0b2d5dca0f96b1ecb25f464f43f00f172f0c8314c4e82a/mm_std-0.1.15-py3-none-any.whl", hash = "sha256:2138cd0606f85fa3b56172218b19dfdcfb192600a762bcb0b50e13dba3cf75fe", size = 14850 },
+    { url = "https://files.pythonhosted.org/packages/f3/ef/cb423cc357cc116313fcd97e9d0ff673234f5f1725f4a73929ced27b1d00/mm_std-0.2.1-py3-none-any.whl", hash = "sha256:71fa84f2fa897901c925614327123e8d0bc6ae61ff7873479dc9a53889442237", size = 14620 },
 ]
 
 [[package]]
