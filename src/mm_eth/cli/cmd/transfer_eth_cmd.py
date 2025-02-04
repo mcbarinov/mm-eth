@@ -32,8 +32,8 @@ class Config(BaseConfig):
     gas: Annotated[str, AfterValidator(Validators.valid_eth_expression("estimate"))]
     delay: Annotated[str | None, AfterValidator(Validators.valid_calc_decimal_value())] = None  # in seconds
     round_ndigits: int = 5
-    log_debug: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
-    log_info: Annotated[Path | None, BeforeValidator(Validators.log_file())] = None
+    log_debug: Annotated[Path | None, AfterValidator(Validators.log_file())] = None
+    log_info: Annotated[Path | None, AfterValidator(Validators.log_file())] = None
 
     @property
     def from_addresses(self) -> list[str]:

@@ -18,11 +18,11 @@ class Validators(ConfigValidators):
         return ConfigValidators.valid_calc_int_expression(var_name, {"t": 6})
 
     @staticmethod
-    def eth_routes() -> Callable[[str | None], list[TxRoute]]:
+    def eth_routes() -> Callable[[str], list[TxRoute]]:
         return ConfigValidators.routes(is_address, to_lower=True)
 
     @staticmethod
-    def eth_private_keys() -> Callable[[str | list[str] | None], AddressToPrivate]:
+    def eth_private_keys() -> Callable[[str], AddressToPrivate]:
         return ConfigValidators.private_keys(address_from_private)
 
     @staticmethod
@@ -30,7 +30,7 @@ class Validators(ConfigValidators):
         return ConfigValidators.address(is_address, to_lower=True)
 
     @staticmethod
-    def eth_addresses(unique: bool) -> Callable[[str | list[str] | None], list[str]]:
+    def eth_addresses(unique: bool) -> Callable[[str], list[str]]:
         return ConfigValidators.addresses(unique, to_lower=True, is_address=is_address)
 
 

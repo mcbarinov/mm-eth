@@ -726,19 +726,19 @@ wheels = [
 
 [[package]]
 name = "mm-crypto-utils"
-version = "0.1.2"
+version = "0.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "mm-std" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/72/38c081e00cb2809b87f660786c42b7214fb99e0bc9eb3da5e476eb5fcd5b/mm_crypto_utils-0.1.2-py3-none-any.whl", hash = "sha256:078befb3d5d7189cf99309128cdbe27d80c933429c984fc108d2185f4a226768", size = 7334 },
+    { url = "https://files.pythonhosted.org/packages/b8/29/fb0a382faadf0ba377747a551e9136c0ad7f64286163de5d0e1e64ae3456/mm_crypto_utils-0.1.4-py3-none-any.whl", hash = "sha256:3b2e011959fa70f3498ea27b0e741d5e3915be771ec1de63729d8bd97b4d0ff4", size = 7733 },
 ]
 
 [[package]]
 name = "mm-eth"
-version = "0.3.0"
+version = "0.3.1"
 source = { editable = "." }
 dependencies = [
     { name = "mm-crypto-utils" },
@@ -760,7 +760,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mm-crypto-utils", specifier = ">=0.1.2" },
+    { name = "mm-crypto-utils", specifier = ">=0.1.4" },
     { name = "typer", specifier = ">=0.15.1" },
     { name = "web3", specifier = "~=7.7.0" },
     { name = "websocket-client", specifier = "~=1.8.0" },
