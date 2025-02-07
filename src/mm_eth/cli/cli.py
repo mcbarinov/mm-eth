@@ -5,6 +5,8 @@ from typing import Annotated
 import typer
 from mm_std import PrintFormat, print_plain
 
+from mm_eth.account import DEFAULT_DERIVATION_PATH
+
 from . import cli_utils
 from .cmd import (
     balance_cmd,
@@ -13,9 +15,7 @@ from .cmd import (
     deploy_cmd,
     encode_input_data_cmd,
     example_cmd,
-    mnemonic_cmd,
     node_cmd,
-    private_key_cmd,
     rpc_cmd,
     send_contract_cmd,
     solc_cmd,
@@ -29,6 +29,7 @@ from .cmd.call_contract_cmd import CallContractCmdParams
 from .cmd.deploy_cmd import DeployCmdParams
 from .cmd.send_contract_cmd import SendContractCmdParams
 from .cmd.transfer_cmd import TransferCmdParams
+from .cmd.wallet import mnemonic_cmd, private_key_cmd
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_enable=False, add_completion=False)
 
@@ -74,9 +75,10 @@ def node_command(
 @wallet_app.command(name="mnemonic", help="Generate eth accounts based on a mnemonic")
 def mnemonic_command(  # nosec
     mnemonic: Annotated[str, typer.Option("--mnemonic", "-m")] = "",
-    passphrase: Annotated[str, typer.Option("--passphrase", "-pass")] = "",
+    passphrase: Annotated[str, typer.Option("--passphrase", "-p")] = "",
     print_path: bool = typer.Option(False, "--print_path"),
-    path_prefix: Annotated[str, typer.Option("--path")] = "m/44'/60'/0'/0",
+    derivation_path: Annotated[str, typer.Option("--path")] = DEFAULT_DERIVATION_PATH,
+    words: int = typer.Option(12, "--words", "-w", help="Number of mnemonic words"),
     limit: int = typer.Option(10, "--limit", "-l"),
     save_file: str = typer.Option("", "--save", "-s", help="Save private keys to a file"),
 ) -> None:
@@ -85,7 +87,8 @@ def mnemonic_command(  # nosec
         passphrase=passphrase,
         print_path=print_path,
         limit=limit,
-        path_prefix=path_prefix,
+        words=words,
+        derivation_path=derivation_path,
         save_file=save_file,
     )
 

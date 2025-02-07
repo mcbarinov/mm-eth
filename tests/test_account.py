@@ -1,4 +1,5 @@
 from mm_eth import account
+from mm_eth.account import DEFAULT_DERIVATION_PATH
 
 
 def test_generate_mnemonic():
@@ -8,7 +9,14 @@ def test_generate_mnemonic():
 
 
 def test_generate_accounts():
-    assert len(account.generate_accounts(account.generate_mnemonic(), limit=17)) == 17
+    mnemonic = "tuition skin amateur sail oak bone panel concert horse need panel balance"
+    passphrase = "pass-secret"
+    res = account.derive_accounts(mnemonic, passphrase, DEFAULT_DERIVATION_PATH, 7)
+    assert len(res) == 7
+    assert res[3].index == 3
+    assert res[3].path == "m/44'/60'/0'/0/3"
+    assert res[3].address == "0x2F9e1b9f4D11756E84d4b6D2f6B107FA37feB701"
+    assert res[3].private_key == "0x7b222a59ac8496b4f1f623bc86d15e889af8406f796037888ddee1290b933183"
 
 
 def test_to_checksum_address():

@@ -13,9 +13,12 @@ Account.enable_unaudited_hdwallet_features()
 
 key_api = KeyAPI()
 
+DEFAULT_DERIVATION_PATH = "m/44'/60'/0'/0/{i}"
+
 
 @dataclass
-class NewAccount:
+class DerivedAccount:
+    index: int
     path: str
     address: str
     private_key: str
@@ -30,18 +33,15 @@ def generate_mnemonic(num_words: int = 24) -> str:
     return mnemonic.generate(num_words=num_words)
 
 
-def generate_accounts(  # nosec
-    mnemonic: str,
-    passphrase: str = "",
-    path_prefix: str = "m/44'/60'/0'/0",
-    limit: int = 12,
-) -> list[NewAccount]:
-    result: list[NewAccount] = []
+def derive_accounts(mnemonic: str, passphrase: str, derivation_path: str, limit: int) -> list[DerivedAccount]:
+    if "{i}" not in derivation_path:
+        raise ValueError("derivation_path must contain {i}, for example: " + DEFAULT_DERIVATION_PATH)
+    result: list[DerivedAccount] = []
     for i in range(limit):
-        path = f"{path_prefix}/{i}"
-        acc = Account.from_mnemonic(mnemonic=mnemonic, account_path=path, passphrase=passphrase)
+        path = derivation_path.replace("{i}", str(i))
+        acc = Account.from_mnemonic(mnemonic, passphrase, path)
         private_key = acc.key.to_0x_hex().lower()
-        result.append(NewAccount(path, acc.address, private_key))
+        result.append(DerivedAccount(i, path, acc.address, private_key))
     return result
 
 
