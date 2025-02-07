@@ -22,7 +22,7 @@ class CallContractCmdParams(BaseConfigParams):
 
 def run(cli_params: CallContractCmdParams) -> None:
     config = Config.read_toml_config_or_exit(cli_params.config_path)
-    if cli_params.print_config_and_exit:
+    if cli_params.print_config:
         config.print_and_exit()
 
     input_data = abi.encode_function_input_by_signature(

@@ -27,7 +27,7 @@ class DeployCmdParams(BaseConfigParams):
 
 def run(cli_params: DeployCmdParams) -> None:
     config = Config.read_toml_config_or_exit(cli_params.config_path)
-    if cli_params.print_config_and_exit:
+    if cli_params.print_config:
         config.print_and_exit({"private_key"})
 
     constructor_types = yaml.full_load(config.constructor_types)

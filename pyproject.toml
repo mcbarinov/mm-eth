@@ -1,12 +1,12 @@
 [project]
 name = "mm-eth"
-version = "0.3.1"
+version = "0.4.0"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
-    "mm-crypto-utils>=0.1.4",
+    "mm-crypto-utils>=0.1.5",
     "websocket-client~=1.8.0",
-    "web3~=7.7.0",
+    "web3~=7.8.0",
     "typer>=0.15.1",
 ]
 [project.scripts]
@@ -20,11 +20,11 @@ build-backend = "hatchling.build"
 dev-dependencies = [
     "pytest~=8.3.4",
     "pytest-xdist~=3.6.1",
-    "ruff~=0.9.4",
+    "ruff~=0.9.5",
     "pip-audit~=2.7.3",
     "bandit~=1.8.2",
-    "mypy~=1.14.1",
-    "types-PyYAML~=6.0.12.20241230",
+    "mypy~=1.15.0",
+    "types-pyyaml>=6.0.12.20241230",
 ]
 
 [tool.mypy]

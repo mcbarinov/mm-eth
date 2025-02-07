@@ -18,6 +18,10 @@ class Validators(ConfigValidators):
         return ConfigValidators.valid_calc_int_expression(var_name, {"t": 6})
 
     @staticmethod
+    def valid_eth_or_token_expression(var_name: str | None = None) -> Callable[[str], str]:
+        return ConfigValidators.valid_calc_int_expression(var_name, SUFFIX_DECIMALS | {"t": 6})
+
+    @staticmethod
     def eth_routes() -> Callable[[str], list[TxRoute]]:
         return ConfigValidators.routes(is_address, to_lower=True)
 

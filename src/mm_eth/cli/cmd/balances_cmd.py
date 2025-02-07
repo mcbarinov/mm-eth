@@ -33,7 +33,7 @@ class BalancesCmdParams(BaseConfigParams):
 
 def run(params: BalancesCmdParams) -> None:
     config = Config.read_toml_config_or_exit(params.config_path)
-    if params.print_config_and_exit:
+    if params.print_config:
         config.print_and_exit()
 
     tokens = _get_tokens_info(config)

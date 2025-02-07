@@ -65,7 +65,7 @@ class SendContractCmdParams(BaseConfigParams):
 # noinspection DuplicatedCode
 def run(cli_params: SendContractCmdParams) -> None:
     config = Config.read_toml_config_or_exit(cli_params.config_path)
-    if cli_params.print_config_and_exit:
+    if cli_params.print_config:
         config.print_and_exit({"private_key"})
 
     mm_crypto_utils.init_logger(cli_params.debug, config.log_debug, config.log_info)
