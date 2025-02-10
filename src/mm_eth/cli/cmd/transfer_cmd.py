@@ -31,7 +31,7 @@ class Config(BaseConfig):
     max_fee: Annotated[str, AfterValidator(Validators.valid_eth_expression("base_fee"))]
     priority_fee: Annotated[str, AfterValidator(Validators.valid_eth_expression())]
     max_fee_limit: Annotated[str | None, AfterValidator(Validators.valid_eth_expression())] = None
-    value: Annotated[str, AfterValidator(Validators.valid_eth_or_token_expression("balance"))]
+    default_value: Annotated[str | None, AfterValidator(Validators.valid_eth_or_token_expression("balance"))] = None
     value_min_limit: Annotated[str | None, AfterValidator(Validators.valid_eth_or_token_expression())] = None
     gas: Annotated[str, AfterValidator(Validators.valid_eth_expression("estimate"))]
     delay: Annotated[str | None, AfterValidator(Validators.valid_calc_decimal_value())] = None  # in seconds
@@ -51,18 +51,20 @@ class Config(BaseConfig):
             raise ValueError("private keys are not set for all addresses")
 
         for transfer in self.transfers:  # If value is not set for a transfer, then set it to the global value of the config.
-            if not transfer.value:
-                transfer.value = self.value
+            if not transfer.value and self.default_value:
+                transfer.value = self.default_value
         for transfer in self.transfers:  # Check all transfers have a value.
             if not transfer.value:
                 raise ValueError(f"{transfer.log_prefix}: value is not set")
 
         if self.token:
-            Validators.valid_token_expression("balance")(self.value)
+            if self.default_value:
+                Validators.valid_token_expression("balance")(self.default_value)
             if self.value_min_limit:
                 Validators.valid_token_expression()(self.value_min_limit)
         else:
-            Validators.valid_eth_expression("balance")(self.value)
+            if self.default_value:
+                Validators.valid_eth_expression("balance")(self.default_value)
             if self.value_min_limit:
                 Validators.valid_eth_expression()(self.value_min_limit)
 
