@@ -147,6 +147,7 @@ def tx_command(
 def transfer_command(
     config_path: Path,
     print_balances: bool = typer.Option(False, "--balances", "-b", help="Print balances and exit"),
+    print_transfers: bool = typer.Option(False, "--transfers", "-t", help="Print transfers (from, to, value) and exit"),
     print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
     emulate: bool = typer.Option(False, "--emulate", "-e", help="Emulate transaction posting"),
     skip_receipt: bool = typer.Option(False, "--skip-receipt", help="Don't wait for a tx receipt"),
@@ -156,6 +157,7 @@ def transfer_command(
         TransferCmdParams(
             config_path=config_path,
             print_balances=print_balances,
+            print_transfers=print_transfers,
             print_config=print_config,
             debug=debug,
             skip_receipt=skip_receipt,

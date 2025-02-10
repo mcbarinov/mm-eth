@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from mm_crypto_utils import AddressToPrivate, ConfigValidators, TxRoute
+from mm_crypto_utils import AddressToPrivate, ConfigValidators, Transfer
 
 from mm_eth.account import address_from_private, is_address
 from mm_eth.constants import SUFFIX_DECIMALS
@@ -22,8 +22,8 @@ class Validators(ConfigValidators):
         return ConfigValidators.valid_calc_int_expression(var_name, SUFFIX_DECIMALS | {"t": 6})
 
     @staticmethod
-    def eth_routes() -> Callable[[str], list[TxRoute]]:
-        return ConfigValidators.routes(is_address, to_lower=True)
+    def eth_transfers() -> Callable[[str], list[Transfer]]:
+        return ConfigValidators.transfers(is_address, to_lower=True)
 
     @staticmethod
     def eth_private_keys() -> Callable[[str], AddressToPrivate]:

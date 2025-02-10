@@ -603,19 +603,6 @@ wheels = [
 ]
 
 [[package]]
-name = "html5lib"
-version = "1.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "six" },
-    { name = "webencodings" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ac/b6/b55c3f49042f1df3dcd422b7f224f939892ee94f22abcf503a9b7339eaf2/html5lib-1.1.tar.gz", hash = "sha256:b2e5b40261e20f354d198eae92afc10d750afb487ed5e50f9c4eaf07c184146f", size = 272215 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/dd/a834df6482147d48e225a49515aabc28974ad5a4ca3215c18a882565b028/html5lib-1.1-py2.py3-none-any.whl", hash = "sha256:0d78f8fde1c230e99fe37986a60526d7049ed4bf8a9fadbad5f00e22e58e041d", size = 112173 },
-]
-
-[[package]]
 name = "httpcore"
 version = "1.0.7"
 source = { registry = "https://pypi.org/simple" }
@@ -726,14 +713,14 @@ wheels = [
 
 [[package]]
 name = "mm-crypto-utils"
-version = "0.1.5"
+version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "mm-std" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2f/81/65963aa5b653b33c69235a9f5cb2d3a0b29d1e985a9325782d9ddad94ec7/mm_crypto_utils-0.1.5-py3-none-any.whl", hash = "sha256:3ee4d35c5f6d2cf6c4d9b192992be75abf8b6afd477528857021f5d958ce5779", size = 7779 },
+    { url = "https://files.pythonhosted.org/packages/78/dd/3cb0ddc4ab14a78a0e828fd1f7ca97298be8eff67b53b6198853e2013976/mm_crypto_utils-0.2.3-py3-none-any.whl", hash = "sha256:33ca42ef22c847c6f92973d7c799460926ee5c5bd7c872d3c7d19f31377e8833", size = 8257 },
 ]
 
 [[package]]
@@ -760,7 +747,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mm-crypto-utils", specifier = ">=0.1.5" },
+    { name = "mm-crypto-utils", specifier = ">=0.2.3" },
     { name = "typer", specifier = ">=0.15.1" },
     { name = "web3", specifier = "~=7.8.0" },
     { name = "websocket-client", specifier = "~=1.8.0" },
@@ -770,7 +757,7 @@ requires-dist = [
 dev = [
     { name = "bandit", specifier = "~=1.8.2" },
     { name = "mypy", specifier = "~=1.15.0" },
-    { name = "pip-audit", specifier = "~=2.7.3" },
+    { name = "pip-audit", specifier = "~=2.8.0" },
     { name = "pytest", specifier = "~=8.3.4" },
     { name = "pytest-xdist", specifier = "~=3.6.1" },
     { name = "ruff", specifier = "~=0.9.5" },
@@ -959,22 +946,22 @@ wheels = [
 
 [[package]]
 name = "pip-audit"
-version = "2.7.3"
+version = "2.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cachecontrol", extra = ["filecache"] },
     { name = "cyclonedx-python-lib" },
-    { name = "html5lib" },
     { name = "packaging" },
     { name = "pip-api" },
     { name = "pip-requirements-parser" },
+    { name = "platformdirs" },
     { name = "requests" },
     { name = "rich" },
     { name = "toml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/46/2f/d030d0d3a50b776f910dd87dc1d57dd4a27bfad176b85882f463632e4747/pip_audit-2.7.3.tar.gz", hash = "sha256:08891bbf179bffe478521f150818112bae998424f58bf9285c0078965aef38bc", size = 50365 }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/c8/44ccea85bd2024f1ebe55eb6cdaf1f2183359176689eed3c0b01926c24ad/pip_audit-2.8.0.tar.gz", hash = "sha256:9816cbd94de6f618a8965c117433006b3d565a708dc05d5a7be47ab65b66fa05", size = 51073 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/4a/c908ec8a527698a6539b431d70454e18aef04d4190ff48107ed4d3df99ff/pip_audit-2.7.3-py3-none-any.whl", hash = "sha256:46a11faee3323f76adf7987de8171daeb660e8f57d8088cc27fb1c1e5c7747b0", size = 56266 },
+    { url = "https://files.pythonhosted.org/packages/11/0c/be5c42643284b2cfc5d9d36b576b7465268a163bd7df481a3979a3d87a0b/pip_audit-2.8.0-py3-none-any.whl", hash = "sha256:200f50d56cb6fba3a9189c20d53250354f72f161d63b6ef77ae5de2b53044566", size = 57002 },
 ]
 
 [[package]]
@@ -988,6 +975,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5e/2a/63b574101850e7f7b306ddbdb02cb294380d37948140eecd468fae392b54/pip-requirements-parser-32.0.1.tar.gz", hash = "sha256:b4fa3a7a0be38243123cf9d1f3518da10c51bdb165a2b2985566247f9155a7d3", size = 209359 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/54/d0/d04f1d1e064ac901439699ee097f58688caadea42498ec9c4b4ad2ef84ab/pip_requirements_parser-32.0.1-py3-none-any.whl", hash = "sha256:4659bc2a667783e7a15d190f6fccf8b2486685b6dba4c19c3876314769c57526", size = 35648 },
+]
+
+[[package]]
+name = "platformdirs"
+version = "4.3.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/13/fc/128cc9cb8f03208bdbf93d3aa862e16d376844a14f9a0ce5cf4507372de4/platformdirs-4.3.6.tar.gz", hash = "sha256:357fb2acbc885b0419afd3ce3ed34564c13c9b95c89360cd9563f73aa5e2b907", size = 21302 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3c/a6/bc1012356d8ece4d66dd75c4b9fc6c1f6650ddd5991e421177d9f8f671be/platformdirs-4.3.6-py3-none-any.whl", hash = "sha256:73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb", size = 18439 },
 ]
 
 [[package]]
@@ -1360,15 +1356,6 @@ wheels = [
 ]
 
 [[package]]
-name = "six"
-version = "1.16.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/71/39/171f1c67cd00715f190ba0b100d606d440a28c93c7714febeca8b79af85e/six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926", size = 34041 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254", size = 11053 },
-]
-
-[[package]]
 name = "sniffio"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1502,15 +1489,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f3/55/943b2b544afade2f1220e4587bd7e95f8a39465d96e0c6e5029a007c6bec/web3-7.8.0.tar.gz", hash = "sha256:712bc9fd6b1ef6e467ee24c25b581e1951cab2cba17f9f548f12587734f2c857", size = 2188875 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b0/52/bc4a08811db59392e13bf56ada316517a83b9a6135c20d357c222c80be2d/web3-7.8.0-py3-none-any.whl", hash = "sha256:c8771b3d8772f7104a0462804449beb57d36cef7bd8b411140f95a92fc46b559", size = 1363475 },
-]
-
-[[package]]
-name = "webencodings"
-version = "0.5.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/0b/02/ae6ceac1baeda530866a85075641cec12989bd8d31af6d5ab4a3e8c92f47/webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923", size = 9721 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/24/2a3e3df732393fed8b3ebf2ec078f05546de641fe1b667ee316ec1dcf3b7/webencodings-0.5.1-py2.py3-none-any.whl", hash = "sha256:a0af1213f3c2226497a97e2b3aa01a7e4bee4f403f95be16fc9acd2947514a78", size = 11774 },
 ]
 
 [[package]]
