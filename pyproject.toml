@@ -1,6 +1,6 @@
 [project]
 name = "mm-eth"
-version = "0.4.1"
+version = "0.5.0"
 description = ""
 requires-python = ">=3.12"
 dependencies = [

@@ -17,7 +17,6 @@ from .cmd import (
     example_cmd,
     node_cmd,
     rpc_cmd,
-    send_contract_cmd,
     solc_cmd,
     token_cmd,
     transfer_cmd,
@@ -27,7 +26,6 @@ from .cmd import (
 from .cmd.balances_cmd import BalancesCmdParams
 from .cmd.call_contract_cmd import CallContractCmdParams
 from .cmd.deploy_cmd import DeployCmdParams
-from .cmd.send_contract_cmd import SendContractCmdParams
 from .cmd.transfer_cmd import TransferCmdParams
 from .cmd.wallet import mnemonic_cmd, private_key_cmd
 
@@ -166,25 +164,25 @@ def transfer_command(
     )
 
 
-@app.command(name="send-contract", help="Send transactions to a contract")
-def send_contract_command(
-    config_path: Path,
-    print_balances: bool = typer.Option(False, "--balances", "-b", help="Print balances and exit"),
-    print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
-    emulate: bool = typer.Option(False, "--emulate", "-e", help="Emulate transaction posting"),
-    no_receipt: bool = typer.Option(False, "--no-receipt", "-nr", help="Don't wait for a tx receipt"),
-    debug: bool = typer.Option(False, "--debug", "-d", help="Print debug info"),
-) -> None:
-    send_contract_cmd.run(
-        SendContractCmdParams(
-            config_path=config_path,
-            print_balances=print_balances,
-            print_config=print_config,
-            debug=debug,
-            no_receipt=no_receipt,
-            emulate=emulate,
-        )
-    )
+# @app.command(name="send-contract", help="Send transactions to a contract")
+# def send_contract_command(
+#     config_path: Path,
+#     print_balances: bool = typer.Option(False, "--balances", "-b", help="Print balances and exit"),
+#     print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
+#     emulate: bool = typer.Option(False, "--emulate", "-e", help="Emulate transaction posting"),
+#     no_receipt: bool = typer.Option(False, "--no-receipt", "-nr", help="Don't wait for a tx receipt"),
+#     debug: bool = typer.Option(False, "--debug", "-d", help="Print debug info"),
+# ) -> None:
+#     send_contract_cmd.run(
+#         SendContractCmdParams(
+#             config_path=config_path,
+#             print_balances=print_balances,
+#             print_config=print_config,
+#             debug=debug,
+#             no_receipt=no_receipt,
+#             emulate=emulate,
+#         )
+#     )
 
 
 @app.command(name="balances", help="Print base and ERC20 token balances")
