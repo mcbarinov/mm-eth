@@ -717,22 +717,21 @@ wheels = [
 
 [[package]]
 name = "mm-crypto-utils"
-version = "0.2.4"
+version = "0.2.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "mm-std" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1b/80/261c463cad1176b14d92b7390328f89184307f201d9d3117012abe5e8a72/mm_crypto_utils-0.2.4-py3-none-any.whl", hash = "sha256:487214228ce79ffb9a8afeef13d67b578393558d03a0268d4b7747174f9ac7ce", size = 8255 },
+    { url = "https://files.pythonhosted.org/packages/7d/37/2cd36351b70ec38130f00c9a564dc5f91556a102fbc7339ba9391f8d8c8f/mm_crypto_utils-0.2.5-py3-none-any.whl", hash = "sha256:c2697525dc6eb02f8dd7361b9a1d83f5693e4696b81bf68ff0a1d6e9e5e0e25e", size = 8268 },
 ]
 
 [[package]]
 name = "mm-eth"
-version = "0.5.2"
+version = "0.5.3"
 source = { editable = "." }
 dependencies = [
-    { name = "cryptography" },
     { name = "mm-crypto-utils" },
     { name = "typer" },
     { name = "web3" },
@@ -752,8 +751,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cryptography", specifier = ">=44.0.1" },
-    { name = "mm-crypto-utils", specifier = ">=0.2.4" },
+    { name = "mm-crypto-utils", specifier = ">=0.2.5" },
     { name = "typer", specifier = ">=0.15.1" },
     { name = "web3", specifier = "~=7.8.0" },
     { name = "websocket-client", specifier = "~=1.8.0" },
@@ -772,7 +770,7 @@ dev = [
 
 [[package]]
 name = "mm-std"
-version = "0.3.0"
+version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -784,7 +782,7 @@ dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/41/b3/8e14a0eaf34b2db3f4c97eacafff63d63bb8c28f7baf718b3bc99f948dc2/mm_std-0.3.0-py3-none-any.whl", hash = "sha256:3aaab32cb88c29741d7a37cea4b2cb74548ec9b94ea4f8ebf0149f678ad921a3", size = 14693 },
+    { url = "https://files.pythonhosted.org/packages/1a/3a/4567a13ce7886cdbbaabca678d328e71814e41ccccc5d70eb354bdc7aca4/mm_std-0.3.1-py3-none-any.whl", hash = "sha256:e04319225050bd3df46d9190fea87cee621c101238aaf8cd9caa9aaf8c0b9df1", size = 14692 },
 ]
 
 [[package]]
