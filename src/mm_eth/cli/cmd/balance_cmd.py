@@ -1,4 +1,4 @@
-from mm_std import Err, Ok, PrintFormat, fatal, print_json, print_plain
+from mm_std import PrintFormat, print_json, print_plain
 
 from mm_eth import erc20, rpc
 from mm_eth.cli.cli_utils import public_rpc_url
@@ -6,46 +6,42 @@ from mm_eth.utils import from_wei_str
 
 
 def run(rpc_url: str, wallet_address: str, token_address: str | None, wei: bool, print_format: PrintFormat) -> None:
+    result: dict[str, object] = {}
     rpc_url = public_rpc_url(rpc_url)
-    json_result: dict[str, object] = {}
 
     # nonce
-    nonce = rpc.eth_get_transaction_count(rpc_url, wallet_address).ok_or_err()
-    print_plain(f"nonce: {nonce}", print_format)
-    json_result["nonce"] = nonce
+    result["nonce"] = rpc.eth_get_transaction_count(rpc_url, wallet_address).ok_or_err()
+    if print_format == PrintFormat.PLAIN:
+        print_plain(f"nonce: {result['nonce']}")
 
-    # balance
-    balance_res = rpc.eth_get_balance(rpc_url, wallet_address)
-    if isinstance(balance_res, Ok):
-        balance = str(balance_res.ok) if wei else from_wei_str(balance_res.ok, "eth")
-    else:
-        balance = balance_res.err
-    print_plain(f"eth_balance: {balance}", print_format)
-    json_result["eth_balance"] = balance
+    # eth balance
+    result["eth_balance"] = (
+        rpc.eth_get_balance(rpc_url, wallet_address).map(lambda x: str(x) if wei else from_wei_str(x, "eth")).ok_or_err()
+    )
+    if print_format == PrintFormat.PLAIN:
+        print_plain(f"eth_balance: {result['eth_balance']}")
 
-    if token_address is not None:
+    if token_address:
         # token decimal
-        decimals_res = erc20.get_decimals(rpc_url, token_address)
-        if isinstance(decimals_res, Err):
-            fatal(f"error: can't get token decimals: {decimals_res.err}")
-        decimals = decimals_res.ok
-        print_plain(f"token_decimal: {decimals}", print_format)
-        json_result["token_decimal"] = decimals
+        result["token_decimal"] = erc20.get_decimals(rpc_url, token_address).ok_or_err()
+        if print_format == PrintFormat.PLAIN:
+            print_plain(f"token_decimal: {result['token_decimal']}")
 
         # token symbol
-        symbol_res = erc20.get_symbol(rpc_url, token_address)
-        if isinstance(symbol_res, Err):
-            fatal(f"error: can't get token symbol: {symbol_res.err}")
-        symbol = symbol_res.ok
-        print_plain(f"token_symbol: {symbol}", print_format)
-        json_result["token_symbol"] = symbol
+        result["token_symbol"] = erc20.get_symbol(rpc_url, token_address).ok_or_err()
+        if print_format == PrintFormat.PLAIN:
+            print_plain(f"token_symbol: {result['token_symbol']}")
 
         # token balance
-        balance_res = erc20.get_balance(rpc_url, token_address, wallet_address)
-        if isinstance(balance_res, Err):
-            fatal(f"error: can't get token balance: {balance_res.err}")
-        balance = str(balance_res.ok) if wei else from_wei_str(balance_res.ok, "t", decimals=decimals)
-        print_plain(f"token_balance: {balance}", print_format)
-        json_result["token_balance"] = balance
+        result["token_balance"] = (
+            erc20.get_balance(rpc_url, token_address, wallet_address)
+            .map(
+                lambda x: str(x) if wei or not result["token_decimal"] else from_wei_str(x, "t", decimals=result["token_decimal"])  # type: ignore[arg-type]
+            )
+            .ok_or_err()
+        )
+        if print_format == PrintFormat.PLAIN:
+            print_plain(f"token_balance: {result['token_balance']}")
 
-    print_json(json_result, print_format=print_format)
+    if print_format == PrintFormat.JSON:
+        print_json(data=result)

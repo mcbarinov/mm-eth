@@ -23,6 +23,8 @@ def public_rpc_url(url: str | None) -> str:
     match url.lower():
         case "mainnet" | "1":
             return "https://ethereum.publicnode.com"
+        case "sepolia" | "11155111":
+            return "https://ethereum-sepolia-rpc.publicnode.com"
         case "opbnb" | "204":
             return "https://opbnb-mainnet-rpc.bnbchain.org"
         case "base" | "8453":

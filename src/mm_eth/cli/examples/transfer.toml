@@ -1,5 +1,5 @@
-# from_address to_address value -- is a format for each transfer, value is optional
-# if value is not set, default_value will be used
+# Each line is a transfer instruction, with format: from_address to_address [value]
+# Value is optional. If value is not set, default_value will be used
 # value is an expression that can contain variable 'balance' and 'random' function
 transfers = """
 0x10fd602Bff689e64D4720D1DCCCD3494f1f16623 0x58487485c3858109f5A37e42546FE87473f79a4b 0.1t # comments are allowed here
@@ -16,13 +16,14 @@ file: /path/to/other_private_keys.txt
 
 token = "0x60631C856303731BE4deb81C0303F80B652aA5b4" # If not specified, it ETH transfers
 
-max_fee = "1.2base_fee+1gwei+random(1,200)" # supported var_name=base_fee
-
-max_fee_limit = "10.1gwei-random(1,10)" # optional
+max_fee = "1.2base_fee+1gwei+random(1,200)" # 'base_fee' variable is supported
 
 priority_fee = "1gwei+random(1,12)"
 
-gas = "estimate+random(100,200)-19" # supported var_name=estimate
+# Don't transfer if max_fee > max_fee_limit, optional
+max_fee_limit = "10.1gwei-random(1,10)"
+
+gas = "estimate+random(100,200)-19" # 'estimate' variable is supported
 
 # default_value is used if transfer.value is not set in transfers. It's optional.
 default_value = "0.5balance-random(1.5t,3t)+11t" # supported var_name=balance. For ERC20 token use 't' suffix.

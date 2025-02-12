@@ -53,6 +53,16 @@ def balance_command(
     balance_cmd.run(rpc_url, wallet_address, token_address, wei, print_format)
 
 
+@app.command(name="balances", help="Print base and ERC20 token balances")
+def balances_command(
+    config_path: Path,
+    print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
+    nonce: bool = typer.Option(False, "--nonce", "-n", help="Print nonce also"),
+    wei: bool = typer.Option(False, "--wei", "-w", help="Show balances in WEI"),
+) -> None:
+    balances_cmd.run(BalancesCmdParams(config_path=config_path, print_config=print_config, wei=wei, show_nonce=nonce))
+
+
 @app.command(name="token", help="Get token info")
 def token_command(
     token_address: Annotated[str, typer.Argument()],
@@ -64,10 +74,10 @@ def token_command(
 @app.command(name="node", help="Check RPC url")
 def node_command(
     urls: Annotated[list[str], typer.Argument()],
-    print_format: Annotated[PrintFormat, typer.Option("--format", "-f", help="Print format")] = PrintFormat.TABLE,
     proxy: Annotated[str | None, typer.Option("--proxy", "-p", help="Proxy")] = None,
+    print_format: Annotated[PrintFormat, typer.Option("--format", "-f", help="Print format")] = PrintFormat.TABLE,
 ) -> None:
-    node_cmd.run(urls, print_format, proxy)
+    node_cmd.run(urls, proxy, print_format)
 
 
 @wallet_app.command(name="mnemonic", help="Generate eth accounts based on a mnemonic")
@@ -183,16 +193,6 @@ def transfer_command(
 #             emulate=emulate,
 #         )
 #     )
-
-
-@app.command(name="balances", help="Print base and ERC20 token balances")
-def balances_command(
-    config_path: Path,
-    print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
-    nonce: bool = typer.Option(False, "--nonce", "-n", help="Print nonce also"),
-    wei: bool = typer.Option(False, "--wei", "-w", help="Show balances in WEI"),
-) -> None:
-    balances_cmd.run(BalancesCmdParams(config_path=config_path, print_config=print_config, wei=wei, show_nonce=nonce))
 
 
 @app.command(name="call-contract", help="Call a method on a contract")
