@@ -717,19 +717,19 @@ wheels = [
 
 [[package]]
 name = "mm-crypto-utils"
-version = "0.2.5"
+version = "0.2.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "mm-std" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7d/37/2cd36351b70ec38130f00c9a564dc5f91556a102fbc7339ba9391f8d8c8f/mm_crypto_utils-0.2.5-py3-none-any.whl", hash = "sha256:c2697525dc6eb02f8dd7361b9a1d83f5693e4696b81bf68ff0a1d6e9e5e0e25e", size = 8268 },
+    { url = "https://files.pythonhosted.org/packages/d2/2a/72236eb60cb007d472fa6be72a98abf6b8273df3158a218cc5f412f86497/mm_crypto_utils-0.2.6-py3-none-any.whl", hash = "sha256:ef738203e2863570308d0fc5fee8f05c469d3f7df905dcdfd092d84690b14c9c", size = 8269 },
 ]
 
 [[package]]
 name = "mm-eth"
-version = "0.5.3"
+version = "0.5.4"
 source = { editable = "." }
 dependencies = [
     { name = "mm-crypto-utils" },
@@ -751,7 +751,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mm-crypto-utils", specifier = ">=0.2.5" },
+    { name = "mm-crypto-utils", specifier = ">=0.2.6" },
     { name = "typer", specifier = ">=0.15.1" },
     { name = "web3", specifier = "~=7.8.0" },
     { name = "websocket-client", specifier = "~=1.8.0" },
@@ -770,7 +770,7 @@ dev = [
 
 [[package]]
 name = "mm-std"
-version = "0.3.1"
+version = "0.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -782,7 +782,7 @@ dependencies = [
     { name = "rich" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1a/3a/4567a13ce7886cdbbaabca678d328e71814e41ccccc5d70eb354bdc7aca4/mm_std-0.3.1-py3-none-any.whl", hash = "sha256:e04319225050bd3df46d9190fea87cee621c101238aaf8cd9caa9aaf8c0b9df1", size = 14692 },
+    { url = "https://files.pythonhosted.org/packages/c0/9a/19f88e047426a52de2f8262d654ca8f20b6b9f15085db7dca6850b7d89d9/mm_std-0.3.2-py3-none-any.whl", hash = "sha256:bf479b1810c887b41aa8b4ad3b6d59d2002703a26b04499516af8e2d94351c86", size = 14709 },
 ]
 
 [[package]]
