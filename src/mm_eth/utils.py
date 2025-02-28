@@ -186,7 +186,7 @@ def log_topic_to_address(topic: HexBytes | str) -> str:
     return result
 
 
-def get_w3(rpc_url: str, timeout: int | None = None, proxy: str | None = None) -> Web3:
+def get_w3(rpc_url: str, timeout: float | None = None, proxy: str | None = None) -> Web3:
     request_kwargs: dict[str, object] = {"timeout": timeout}
     if proxy:
         request_kwargs["proxies"] = {"http": proxy, "https": proxy}
