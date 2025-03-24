@@ -11,7 +11,7 @@ from eth_utils import to_checksum_address, to_hex
 from mm_crypto_utils import Nodes, Proxies
 from mm_std import Err, Ok, Result
 
-from mm_eth import rpc
+from mm_eth import async_rpc, rpc
 from mm_eth.rpc import Log
 from mm_eth.tx import SignedTx, sign_legacy_tx, sign_tx
 from mm_eth.utils import hex_str_to_int, hex_to_bytes, log_topic_to_address
@@ -67,6 +67,27 @@ def get_balance(
         timeout=timeout,
         proxies=proxies,
         attempts=attempts,
+    ).and_then(hex_str_to_int)
+
+
+async def async_get_balance(
+    rpc_urls: Nodes,
+    token_address: str,
+    user_address: str,
+    timeout: int = 10,
+    proxies: Proxies = None,
+    attempts: int = 1,
+) -> Result[int]:
+    data = "0x70a08231000000000000000000000000" + user_address[2:]
+    return (
+        await async_rpc.rpc_call(
+            nodes=rpc_urls,
+            method="eth_call",
+            params=[{"to": token_address, "data": data}, "latest"],
+            timeout=timeout,
+            proxies=proxies,
+            attempts=attempts,
+        )
     ).and_then(hex_str_to_int)
 
 

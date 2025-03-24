@@ -69,6 +69,11 @@ def mainnet() -> str:
 
 
 @pytest.fixture
+def mainnet_ws() -> str:
+    return os.getenv("MAINNET_RPC_WS")
+
+
+@pytest.fixture
 def infura():
     infura = get_dotenv("INFURA_API_KEY")
 
