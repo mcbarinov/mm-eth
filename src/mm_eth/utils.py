@@ -2,13 +2,15 @@ import re
 from decimal import Decimal, localcontext
 from typing import Any, cast
 
+import aiohttp
 import eth_utils
 import pydash
+from aiohttp_socks import ProxyConnector
 from eth_typing import HexStr
 from hexbytes import HexBytes
 from mm_std import Err, Ok, Result, number_with_separator
 from pydantic import BaseModel
-from web3 import Web3
+from web3 import AsyncWeb3, Web3
 from web3.types import Wei
 
 
@@ -191,6 +193,20 @@ def get_w3(rpc_url: str, timeout: float | None = None, proxy: str | None = None)
     if proxy:
         request_kwargs["proxies"] = {"http": proxy, "https": proxy}
     return Web3(Web3.HTTPProvider(rpc_url, request_kwargs=request_kwargs))
+
+
+async def get_async_w3(rpc_url: str, timeout: float | None = None, proxy: str | None = None) -> AsyncWeb3:
+    request_kwargs: dict[str, object] = {"timeout": timeout}
+    if proxy and proxy.startswith("http"):
+        request_kwargs["proxy"] = proxy
+    provider = AsyncWeb3.AsyncHTTPProvider(rpc_url, request_kwargs=request_kwargs, exception_retry_configuration=None)
+    w3 = AsyncWeb3(provider)
+
+    if proxy and proxy.startswith("socks"):
+        session = aiohttp.ClientSession(connector=ProxyConnector.from_url(proxy))
+        await provider.cache_async_session(session)
+
+    return w3
 
 
 def name_network(chain_id: int) -> str:

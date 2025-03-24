@@ -23,9 +23,9 @@ def test_net_version(infura):
     assert res.unwrap() == "1"
 
 
-def test_eth_send_raw_transaction(infura, private_0, address_1):
+def test_eth_send_raw_transaction(mainnet, private_0, address_1):
     raw_tx = tx.sign_legacy_tx(nonce=0, gas_price=111, gas=21000, private_key=private_0, chain_id=1, value=222, to=address_1)
-    res = rpc.eth_send_raw_transaction(infura(), raw_tx.raw_tx)
+    res = rpc.eth_send_raw_transaction(mainnet, raw_tx.raw_tx)
     assert res.unwrap_err().startswith("service_error: insufficient funds for")
 
 

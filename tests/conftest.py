@@ -1,10 +1,19 @@
 import json
+import os
 
 import pytest
+from dotenv import load_dotenv
 from eth_typing import ABI
-from mm_std import Err, get_dotenv
+from mm_std import Err, get_dotenv, hr, str_to_list
 
 from mm_eth.anvil import Anvil
+
+load_dotenv()
+
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
 
 
 @pytest.fixture()
@@ -41,15 +50,22 @@ def anvil(mnemonic):
 
 @pytest.fixture
 def etherscan_key():
-    return get_dotenv("MM_PROXIES_APP")
+    return os.getenv("MM_PROXIES_APP")
 
 
 @pytest.fixture
-def mm_proxies() -> list[str]:
-    # url, token = get_dotenv("MM_PROXIES_APP").split("|")
-    # res = hr(f"{url}/api/proxies/live", headers={"access-token": token})
-    # return res.json.get("proxies")
-    return []
+def proxies() -> list[str]:
+    proxies_url = get_dotenv("PROXIES_URL")
+    if not proxies_url:
+        return []
+
+    res = hr(proxies_url)
+    return str_to_list(res.body, unique=True)
+
+
+@pytest.fixture
+def mainnet() -> str:
+    return os.getenv("MAINNET_RPC")
 
 
 @pytest.fixture

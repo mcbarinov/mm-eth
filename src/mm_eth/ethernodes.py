@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from mm_std import CHROME_USER_AGENT, Result, hr
+from mm_std import CHROME_USER_AGENT, Ok, Result, hr
 from pydantic import BaseModel, Field
 
 
@@ -29,6 +29,6 @@ def search_nodes(offset: int = 0, proxy: str | None = None) -> Result[SearchResu
     if res.is_error():
         return res.to_err_result()
     try:
-        return res.to_ok_result(SearchResult(**res.json))
+        return Ok(SearchResult(**res.json))
     except Exception as e:
         return res.to_err_result(f"exception: {e}")
