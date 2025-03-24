@@ -20,17 +20,24 @@ def get_name(rpc_url: str, address: str, timeout: float = 5, proxy: str | None =
         w3 = get_w3(rpc_url, timeout=timeout, proxy=proxy)
         return Ok(w3.ens.name(w3.to_checksum_address(address)))  # type: ignore[union-attr]
     except Exception as e:
-        return Err(e)
+        error = str(e)
+        if not error:
+            error = e.__class__.__qualname__
+        return Err("exception: " + error)
 
 
 async def async_get_name(rpc_url: str, address: str, timeout: float = 5, proxy: str | None = None) -> Result[str | None]:
+    w3 = await get_async_w3(rpc_url, timeout=timeout, proxy=proxy)
     try:
-        w3 = await get_async_w3(rpc_url, timeout=timeout, proxy=proxy)
         res = await w3.ens.name(w3.to_checksum_address(address))  # type: ignore[union-attr]
-        await w3.provider.disconnect()
         return Ok(res)
     except Exception as e:
-        return Err(e)
+        error = str(e)
+        if not error:
+            error = e.__class__.__qualname__
+        return Err("exception: " + error)
+    finally:
+        await w3.provider.disconnect()
 
 
 async def async_get_name_with_retries(
