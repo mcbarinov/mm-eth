@@ -1,6 +1,6 @@
 [project]
 name = "mm-eth"
-version = "0.5.7" # 0.5.9 can't be uploaded, skip it!!!
+version = "0.5.8" # 0.5.9 can't be uploaded, skip it!!!
 description = ""
 requires-python = ">=3.12"
 dependencies = [
