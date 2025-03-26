@@ -3,7 +3,7 @@ from typing import Any
 
 import websockets
 from mm_crypto_utils import Nodes, Proxies, random_node, random_proxy
-from mm_std import Err, Ok, Result, ahr
+from mm_std import Err, Ok, Result, hra
 
 from mm_eth.utils import hex_str_to_int
 
@@ -33,7 +33,7 @@ async def rpc_call(
 
 
 async def _http_call(node: str, data: dict[str, object], timeout: int, proxy: str | None) -> Result[Any]:
-    res = await ahr(node, method="POST", proxy=proxy, timeout=timeout, params=data, json_params=True)
+    res = await hra(node, method="POST", proxy=proxy, timeout=timeout, params=data, json_params=True)
     if res.is_error():
         return res.to_err_result()
     try:
