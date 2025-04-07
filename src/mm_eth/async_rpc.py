@@ -1,4 +1,5 @@
 import json
+from collections.abc import Sequence
 from typing import Any
 
 import websockets
@@ -12,9 +13,9 @@ async def rpc_call(
     *,
     nodes: Nodes,
     method: str,
-    params: list[object],
+    params: Sequence[object],
     id_: int = 1,
-    timeout: int = 10,
+    timeout: float = 10,
     proxies: Proxies = None,
     attempts: int = 1,
 ) -> Result[Any]:
@@ -32,7 +33,7 @@ async def rpc_call(
     return res
 
 
-async def _http_call(node: str, data: dict[str, object], timeout: int, proxy: str | None) -> Result[Any]:
+async def _http_call(node: str, data: dict[str, object], timeout: float, proxy: str | None) -> Result[Any]:
     res = await hra(node, method="POST", proxy=proxy, timeout=timeout, params=data, json_params=True)
     if res.is_error():
         return res.to_err_result()
@@ -47,7 +48,7 @@ async def _http_call(node: str, data: dict[str, object], timeout: int, proxy: st
         return res.to_err_result(f"exception: {err}")
 
 
-async def _ws_call(node: str, data: dict[str, object], timeout: int) -> Result[Any]:
+async def _ws_call(node: str, data: dict[str, object], timeout: float) -> Result[Any]:
     try:
         async with websockets.connect(node, timeout=timeout) as ws:
             await ws.send(json.dumps(data))
