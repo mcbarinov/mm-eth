@@ -7,7 +7,8 @@ dependencies = [
     "mm-crypto-utils>=0.2.10",
     "websocket-client~=1.8.0",
     "aiohttp-socks~=0.10.1",
-    "web3~=7.9.0",
+    "web3~=7.10.0",
+    "mm-std~=0.3.22",
     "typer>=0.15.2",
 ]
 [project.scripts]
@@ -21,11 +22,11 @@ build-backend = "hatchling.build"
 dev-dependencies = [
     "pytest~=8.3.5",
     "pytest-xdist~=3.6.1",
-    "ruff~=0.11.2",
+    "ruff~=0.11.4",
     "pip-audit~=2.8.0",
     "bandit~=1.8.3",
     "mypy~=1.15.0",
-    "types-pyyaml>=6.0.12.20241230",
+    "types-pyyaml>=6.0.12.20250402",
     "anyio>=4.9.0",
 ]
 

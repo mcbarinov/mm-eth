@@ -5,6 +5,7 @@ from typing import Any, cast
 import aiohttp
 import eth_utils
 import pydash
+from aiohttp import ClientTimeout
 from aiohttp_socks import ProxyConnector
 from eth_typing import HexStr
 from hexbytes import HexBytes
@@ -196,14 +197,19 @@ def get_w3(rpc_url: str, timeout: float | None = None, proxy: str | None = None)
 
 
 async def get_async_w3(rpc_url: str, timeout: float | None = None, proxy: str | None = None) -> AsyncWeb3:
-    request_kwargs: dict[str, object] = {"timeout": timeout}
-    if proxy and proxy.startswith("http"):
-        request_kwargs["proxy"] = proxy
-    provider = AsyncWeb3.AsyncHTTPProvider(rpc_url, request_kwargs=request_kwargs, exception_retry_configuration=None)
+    # request_kwargs: dict[str, object] = {"timeout": timeout}
+    # if proxy and proxy.startswith("http"):
+    #     request_kwargs["proxy"] = proxy
+    provider = AsyncWeb3.AsyncHTTPProvider(rpc_url,  exception_retry_configuration=None)
     w3 = AsyncWeb3(provider)
 
-    if proxy and proxy.startswith("socks"):
-        session = aiohttp.ClientSession(connector=ProxyConnector.from_url(proxy))
+    if proxy:
+        session = aiohttp.ClientSession(connector=ProxyConnector.from_url(proxy), timeout=ClientTimeout(
+    total=timeout,
+    connect=timeout,
+    sock_connect=timeout,
+    sock_read=timeout
+))
         await provider.cache_async_session(session)
 
     return w3
