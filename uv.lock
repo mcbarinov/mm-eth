@@ -658,19 +658,19 @@ wheels = [
 
 [[package]]
 name = "mm-crypto-utils"
-version = "0.2.12"
+version = "0.2.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "mm-std" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/43/c3/5c961b098899f2f71b955cdd1aa60de26d871b09d387461be9692cc33c17/mm_crypto_utils-0.2.12-py3-none-any.whl", hash = "sha256:d41e9d45e7752d1a211f3a799b851ee87c711c3e3cf3feececdbd9041344a624", size = 9146 },
+    { url = "https://files.pythonhosted.org/packages/84/00/5bf801eba9d5af8f4bb330993db85c12dec8df13b15e984d83ffccbc60ce/mm_crypto_utils-0.2.13-py3-none-any.whl", hash = "sha256:dc79cf3767ca1a9f56900d1a2b9c1d8016e6334026fa27271b4fd109fae9ff72", size = 9708 },
 ]
 
 [[package]]
 name = "mm-eth"
-version = "0.5.13"
+version = "0.5.15"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp-socks" },
@@ -696,7 +696,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiohttp-socks", specifier = "~=0.10.1" },
-    { name = "mm-crypto-utils", specifier = ">=0.2.12" },
+    { name = "mm-crypto-utils", specifier = ">=0.2.13" },
     { name = "mm-std", specifier = "~=0.3.29" },
     { name = "typer", specifier = ">=0.15.2" },
     { name = "web3", specifier = "~=7.10.0" },

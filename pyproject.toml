@@ -1,10 +1,10 @@
 [project]
 name = "mm-eth"
-version = "0.5.13"
+version = "0.5.15"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
-    "mm-crypto-utils>=0.2.12",
+    "mm-crypto-utils>=0.2.13",
     "websocket-client~=1.8.0",
     "aiohttp-socks~=0.10.1",
     "web3~=7.10.0",
@@ -39,7 +39,7 @@ strict = true
 enable_error_code = ["truthy-bool", "possibly-undefined"]
 exclude = ["^tests/", "^tmp/"]
 [[tool.mypy.overrides]]
-module = ["rlp", "rlp.sedes", "ens.utils"]
+module = ["rlp", "rlp.sedes", "ens.utils", "ens"]
 ignore_missing_imports = true
 
 [tool.ruff]
