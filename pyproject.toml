@@ -1,14 +1,13 @@
 [project]
 name = "mm-eth"
-version = "0.5.16"
+version = "0.5.17"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
-    "mm-crypto-utils>=0.2.13",
+    "mm-crypto-utils>=0.2.15",
     "websocket-client~=1.8.0",
     "aiohttp-socks~=0.10.1",
     "web3~=7.10.0",
-    "mm-std~=0.3.29",
     "typer>=0.15.2",
 ]
 [project.scripts]

@@ -49,14 +49,14 @@ async def _ws_call(node: str, data: dict[str, object], timeout: float) -> DataRe
 
         err = response.get("error", {}).get("message", "")
         if err:
-            return DataResult(err=f"service_error: {err}", data=response)
+            return DataResult.err(f"service_error: {err}", response)
         if "result" in response:
-            return DataResult(ok=response["result"], data=response)
-        return DataResult(err="unknown_response", data=response)
+            return DataResult.ok(response["result"], response)
+        return DataResult.err("unknown_response", response)
     except TimeoutError:
-        return DataResult(err="timeout")
+        return DataResult.err("timeout")
     except Exception as err:
-        return DataResult(err=f"exception: {err}")
+        return DataResult.exception(err)
 
 
 async def eth_block_number(node: str, timeout: float = DEFAULT_TIMEOUT, proxy: str | None = None) -> DataResult[int]:
@@ -98,12 +98,12 @@ async def erc20_decimals(
         return res
     try:
         if res.unwrap() == "0x":
-            return DataResult(err="no_decimals", data=res.data)
+            return DataResult.err("no_decimals", res.data)
         value = res.unwrap()
         result = eth_utils.to_int(hexstr=value[0:66]) if len(value) > 66 else eth_utils.to_int(hexstr=value)
-        return DataResult(ok=result, data=res.data)
-    except Exception as e:
-        return DataResult(err=f"exception: {e}", data=res.data)
+        return DataResult.ok(result, res.data)
+    except Exception as err:
+        return DataResult.exception(err, data=res.data)
 
 
 ENS_REGISTRY_ADDRESS: str = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
@@ -125,7 +125,7 @@ async def ens_name(node: str, address: str, timeout: float = DEFAULT_TIMEOUT, pr
         return resolver_res
 
     if resolver_res.is_ok() and len(resolver_res.unwrap()) != 66:
-        return DataResult(ok_is_none=True, data={"revolver_response": resolver_res.dict()})
+        return DataResult.ok(None, {"revolver_response": resolver_res.dict()})
 
     resolver_address = eth_utils.to_checksum_address("0x" + resolver_res.unwrap()[-40:])
 
@@ -135,31 +135,21 @@ async def ens_name(node: str, address: str, timeout: float = DEFAULT_TIMEOUT, pr
     name_res: DataResult[str] = await rpc_call(node, "eth_call", name_params, timeout=timeout, proxy=proxy)
 
     if name_res.is_err():
-        return DataResult(
-            err=name_res.unwrap_err(), data={"resolver_response": resolver_res.dict(), "name_response": name_res.dict()}
-        )
+        return DataResult.err(name_res.unwrap_err(), {"resolver_response": resolver_res.dict(), "name_response": name_res.dict()})
 
     if name_res.unwrap() == "0x":
-        return DataResult(
-            ok=None,
-            data={"resolver_response": resolver_res.dict(), "name_response": name_res.dict()},
-            ok_is_none=True,
-        )
+        return DataResult.ok(None, {"resolver_response": resolver_res.dict(), "name_response": name_res.dict()})
 
     try:
         hex_data = name_res.unwrap()
         length_hex = hex_data[66:130]
         str_len = int(length_hex, 16) * 2
         name_hex = hex_data[130 : 130 + str_len]
-        return DataResult(
-            ok=bytes.fromhex(name_hex).decode("utf-8"),
-            data={"resolver_response": resolver_res.dict(), "name_response": name_res.dict()},
+        return DataResult.ok(
+            bytes.fromhex(name_hex).decode("utf-8"), {"resolver_response": resolver_res.dict(), "name_response": name_res.dict()}
         )
-    except Exception as e:
-        return DataResult(
-            err="exception",
-            data={"resolver_response": resolver_res.dict(), "name_response": name_res.dict(), "exception": str(e)},
-        )
+    except Exception as err:
+        return DataResult.exception(err, data={"resolver_response": resolver_res.dict(), "name_response": name_res.dict()})
 
 
 def _hex_str_to_int(value: str) -> int:
