@@ -125,7 +125,7 @@ async def ens_name(node: str, address: str, timeout: float = DEFAULT_TIMEOUT, pr
         return resolver_res
 
     if resolver_res.is_ok() and len(resolver_res.unwrap()) != 66:
-        return DataResult(ok=None, data={"revolver_response": resolver_res.dict()})
+        return DataResult(ok_is_none=True, data={"revolver_response": resolver_res.dict()})
 
     resolver_address = eth_utils.to_checksum_address("0x" + resolver_res.unwrap()[-40:])
 
