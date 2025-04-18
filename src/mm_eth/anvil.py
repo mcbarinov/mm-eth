@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from subprocess import Popen  # nosec
 
-from mm_std import Err, Ok, Result
+from mm_std import Result
 from mm_std.net import get_free_local_port
 
 from mm_eth import account, rpc
@@ -25,16 +25,16 @@ class Anvil:
         if self.process:
             self.process.kill()
 
-    def check(self) -> bool:
-        res = rpc.eth_chain_id(self.rpc_url)
-        return isinstance(res, Ok) and res.ok == self.chain_id
+    async def check(self) -> bool:
+        res = await rpc.eth_chain_id(self.rpc_url)
+        return res.is_ok() and res.unwrap() == self.chain_id
 
     @property
     def rpc_url(self) -> str:
         return f"http://localhost:{self.port}"
 
     @classmethod
-    def launch(
+    async def launch(
         cls,
         chain_id: int = 31337,
         port: int | None = None,
@@ -49,8 +49,8 @@ class Anvil:
                 port = get_free_local_port()
             anvil = Anvil(chain_id=chain_id, port=port, mnemonic=mnemonic)
             anvil.start_process()
-            if anvil.check():
-                return Ok(anvil)
+            if await anvil.check():
+                return Result.ok(anvil)
             port = get_free_local_port()
 
-        return Err("can't lauch anvil")
+        return Result.err("can't launch anvil")

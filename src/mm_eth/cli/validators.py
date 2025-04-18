@@ -1,11 +1,18 @@
 from collections.abc import Callable
 
+import eth_utils
 from mm_crypto_utils import AddressToPrivate, ConfigValidators, Transfer
 
-from mm_eth.account import address_from_private, is_address
-from mm_eth.constants import SUFFIX_DECIMALS
+from mm_eth import account
 
-from . import calcs
+SUFFIX_DECIMALS = {"eth": 18, "gwei": 9, "ether": 18}
+
+
+def address_from_private(private_key: str) -> str:
+    res = account.private_to_address(private_key)
+    if res.is_err():
+        raise ValueError("invalid private key")
+    return res.unwrap().lower()
 
 
 class Validators(ConfigValidators):
@@ -23,7 +30,7 @@ class Validators(ConfigValidators):
 
     @staticmethod
     def eth_transfers() -> Callable[[str], list[Transfer]]:
-        return ConfigValidators.transfers(is_address, to_lower=True)
+        return ConfigValidators.transfers(is_address=eth_utils.is_address, to_lower=True)
 
     @staticmethod
     def eth_private_keys() -> Callable[[str], AddressToPrivate]:
@@ -31,18 +38,8 @@ class Validators(ConfigValidators):
 
     @staticmethod
     def eth_address() -> Callable[[str], str]:
-        return ConfigValidators.address(is_address, to_lower=True)
+        return ConfigValidators.address(eth_utils.is_address, to_lower=True)
 
     @staticmethod
     def eth_addresses(unique: bool) -> Callable[[str], list[str]]:
-        return ConfigValidators.addresses(unique, to_lower=True, is_address=is_address)
-
-
-def is_valid_calc_function_args(value: str | None) -> bool:
-    if value is None:
-        return True
-    try:
-        calcs.calc_function_args(value)
-        return True  # noqa: TRY300
-    except ValueError:
-        return False
+        return ConfigValidators.addresses(unique, to_lower=True, is_address=eth_utils.is_address)

@@ -11,8 +11,6 @@ from pydantic import BaseModel
 from web3 import Web3
 from web3.auto import w3
 
-from mm_eth.utils import hex_to_bytes
-
 
 @dataclass
 class NameTypeValue:
@@ -99,7 +97,7 @@ def encode_function_input_by_signature(func_signature: str, args: list[Any]) -> 
     func_abi: ABIFunction = {
         "name": func_name,
         "type": "function",
-        "inputs": [{"type": t} for t in arg_types],  # type: ignore[typeddict-item]
+        "inputs": [{"type": t} for t in arg_types],
     }
     return encode_function_input_by_abi(func_abi, func_name, args)
 
@@ -110,7 +108,7 @@ def encode_function_signature(func_name_with_types: str) -> HexStr:
 
 
 def decode_data(types: list[str], data: str) -> tuple[Any, ...]:
-    return eth_abi.decode(types, hex_to_bytes(data))
+    return eth_abi.decode(types, eth_utils.to_bytes(hexstr=HexStr(data)))
 
 
 def encode_data(types: list[str], args: list[Any]) -> str:

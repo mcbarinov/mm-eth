@@ -1,15 +1,14 @@
 from dataclasses import dataclass
 from typing import Annotated
 
-from mm_std import BaseConfig, Err, Ok, fatal
+from mm_std import BaseConfig, fatal
 from pydantic import BeforeValidator
 from rich.live import Live
 from rich.table import Table
 
-from mm_eth import erc20, rpc
+from mm_eth import converters, retry
 from mm_eth.cli.cli_utils import BaseConfigParams
 from mm_eth.cli.validators import Validators
-from mm_eth.utils import from_token_wei_str, from_wei_str
 
 
 class Config(BaseConfig):
@@ -31,12 +30,12 @@ class BalancesCmdParams(BaseConfigParams):
     show_nonce: bool
 
 
-def run(params: BalancesCmdParams) -> None:
+async def run(params: BalancesCmdParams) -> None:
     config = Config.read_toml_config_or_exit(params.config_path)
     if params.print_config:
         config.print_and_exit()
 
-    tokens = _get_tokens_info(config)
+    tokens = await _get_tokens_info(config)
 
     table = Table(title="balances")
     table.add_column("address")
@@ -52,36 +51,33 @@ def run(params: BalancesCmdParams) -> None:
         for address in config.addresses:
             row = [address]
             if params.show_nonce:
-                row.append(str(rpc.eth_get_transaction_count(config.nodes, address, attempts=5).ok_or_err()))
+                nonce = await retry.eth_get_transaction_count(5, config.nodes, None, address=address)
+                row.append(str(nonce.value_or_error()))
 
-            base_balance_res = rpc.eth_get_balance(config.nodes, address, attempts=5)
-            if isinstance(base_balance_res, Ok):
-                base_sum += base_balance_res.ok
+            base_balance_res = await retry.eth_get_balance(5, config.nodes, None, address=address)
+            if base_balance_res.is_ok():
+                balance = base_balance_res.unwrap()
+                base_sum += balance
                 if params.wei:
-                    row.append(str(base_balance_res.ok))
+                    row.append(str(balance))
                 else:
-                    row.append(
-                        from_wei_str(base_balance_res.ok, "eth", round_ndigits=config.round_ndigits, print_unit_name=False),
-                    )
+                    row.append(str(converters.from_wei(balance, "eth", round_ndigits=config.round_ndigits)))
             else:
-                row.append(base_balance_res.err)
+                row.append(base_balance_res.unwrap_error())
 
             for t in tokens:
-                token_balance_res = erc20.get_balance(config.nodes, t.address, address, attempts=5)
-                if isinstance(token_balance_res, Ok):
-                    token_sum[t.address] += token_balance_res.ok
+                token_balance_res = await retry.erc20_balance(5, config.nodes, None, token=t.address, wallet=address)
+                if token_balance_res.is_ok():
+                    token_balance = token_balance_res.unwrap()
+                    token_sum[t.address] += token_balance
                     if params.wei:
-                        row.append(str(token_balance_res.ok))
+                        row.append(str(token_balance))
                     else:
                         row.append(
-                            from_token_wei_str(
-                                token_balance_res.ok,
-                                decimals=t.decimals,
-                                round_ndigits=config.round_ndigits,
-                            ),
+                            str(converters.from_wei(token_balance, "t", round_ndigits=config.round_ndigits, decimals=t.decimals))
                         )
                 else:
-                    row.append(token_balance_res.err)
+                    row.append(token_balance_res.unwrap_error())
 
             table.add_row(*row)
 
@@ -92,26 +88,29 @@ def run(params: BalancesCmdParams) -> None:
             sum_row.append(str(base_sum))
             sum_row.extend([str(token_sum[t.address]) for t in tokens])
         else:
-            sum_row.append(from_wei_str(base_sum, "eth", round_ndigits=config.round_ndigits, print_unit_name=False))
+            sum_row.append(str(converters.from_wei(base_sum, "eth", round_ndigits=config.round_ndigits)))
             sum_row.extend(
-                [from_token_wei_str(token_sum[t.address], t.decimals, round_ndigits=config.round_ndigits) for t in tokens]
+                [
+                    str(converters.from_wei(token_sum[t.address], "t", round_ndigits=config.round_ndigits, decimals=t.decimals))
+                    for t in tokens
+                ]
             )
 
         table.add_row(*sum_row)
 
 
-def _get_tokens_info(config: Config) -> list[Token]:
+async def _get_tokens_info(config: Config) -> list[Token]:
     result: list[Token] = []
     for address in config.tokens:
-        decimals_res = erc20.get_decimals(config.nodes, address, attempts=5)
-        if isinstance(decimals_res, Err):
-            fatal(f"can't get token {address} decimals: {decimals_res.err}")
-        decimal = decimals_res.ok
+        decimals_res = await retry.erc20_decimals(5, config.nodes, None, token=address)
+        if decimals_res.is_err():
+            fatal(f"can't get token {address} decimals: {decimals_res.unwrap_error()}")
+        decimal = decimals_res.unwrap()
 
-        symbols_res = erc20.get_symbol(config.nodes, address, attempts=5)
-        if isinstance(symbols_res, Err):
-            fatal(f"can't get token {address} symbol: {symbols_res.err}")
-        symbol = symbols_res.ok
+        symbols_res = await retry.erc20_symbol(5, config.nodes, None, token=address)
+        if symbols_res.is_err():
+            fatal(f"can't get token {address} symbol: {symbols_res.unwrap_error()}")
+        symbol = symbols_res.unwrap()
 
         result.append(Token(address=address, decimals=decimal, symbol=symbol))
 

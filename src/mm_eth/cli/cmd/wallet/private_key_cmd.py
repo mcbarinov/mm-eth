@@ -4,7 +4,8 @@ from mm_eth import account
 
 
 def run(private_key: str) -> None:
-    try:
-        print_plain(account.private_to_address(private_key))
-    except Exception as e:
-        fatal(f"wrong private key: {e}")
+    res = account.private_to_address(private_key)
+    if res.is_ok():
+        print_plain(res.unwrap())
+    else:
+        fatal(f"invalid private key: '{private_key}'")

@@ -1,9 +1,10 @@
 import random
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from mm_std import Err, Ok, Result, run_command
+from mm_std import Result, run_command
 
 
 @dataclass
@@ -12,22 +13,34 @@ class SolcResult:
     abi: str
 
 
-def solc(contract_name: str, contract_path: str, tmp_dir: str) -> Result[SolcResult]:
-    if tmp_dir.startswith("~"):
-        tmp_dir = Path(tmp_dir).expanduser().as_posix()
-    if contract_path.startswith("~"):
-        contract_path = Path(contract_path).expanduser().as_posix()
-    work_dir = f"{tmp_dir}/solc_{contract_name}_{random.randint(0, 100_000_000)}"
-    abi_path = f"{work_dir}/{contract_name}.abi"
-    bin_path = f"{work_dir}/{contract_name}.bin"
+def solc(contract_name: str, contract_path: Path, tmp_dir: Path) -> Result[SolcResult]:
+    # Sanitize contract name to avoid unsafe characters in directory name
+    safe_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", contract_name)
+
+    # Expand ~ in paths if present
+    contract_path = contract_path.expanduser().resolve()
+    tmp_dir = tmp_dir.expanduser().resolve()
+
+    work_dir = tmp_dir / f"solc_{safe_name}_{random.randint(0, 100_000_000)}"
+    abi_path = work_dir / f"{contract_name}.abi"
+    bin_path = work_dir / f"{contract_name}.bin"
+
+    work_dir_created = False
     try:
-        Path(work_dir).mkdir(parents=True)
-        cmd = f"solc -o '{work_dir}' --abi --bin --optimize {contract_path}"
-        run_command(cmd)
-        abi = Path(abi_path).read_text()
-        bin_ = Path(bin_path).read_text()
-        return Ok(SolcResult(bin=bin_, abi=abi))
+        work_dir.mkdir(parents=True, exist_ok=False)
+        work_dir_created = True
+
+        cmd = f"solc -o '{work_dir}' --abi --bin --optimize '{contract_path}'"
+        result = run_command(cmd)
+        if result.code != 0:
+            return Result.err(f"solc error: {result.stderr}")
+
+        abi = abi_path.read_text()
+        bin_ = bin_path.read_text()
+
+        return Result.ok(SolcResult(bin=bin_, abi=abi))
     except Exception as e:
-        return Err(f"exception: {e}")
+        return Result.err(e)
     finally:
-        shutil.rmtree(work_dir, ignore_errors=True)
+        if work_dir_created:
+            shutil.rmtree(work_dir, ignore_errors=True)

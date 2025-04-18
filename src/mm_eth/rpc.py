@@ -1,403 +1,104 @@
-from __future__ import annotations
-
+import asyncio
 import json
-from dataclasses import dataclass
+import string
+from collections.abc import Sequence
 from typing import Any, Literal, cast
 
-import websocket
-from mm_crypto_utils import Nodes, Proxies, random_node, random_proxy
-from mm_std import Err, Ok, Result, hr, random_choice
-from pydantic import BaseModel
-from web3.types import BlockIdentifier
+import ens.utils
+import eth_utils
+import pydash
+import websockets
+from eth_typing import BlockIdentifier
+from mm_std import Result, http_request
+from web3.types import TxReceipt
 
-from mm_eth.utils import hex_str_to_int
-
-
-@dataclass
-class TxReceipt:
-    tx_hash: str
-    tx_index: int
-    block_number: int
-    from_address: str
-    to_address: str | None
-    contract_address: str | None
-    status: int | None
+TIMEOUT = 7.0
 
 
-@dataclass
-class Log:
-    address: str
-    block_hash: str
-    block_number: int
-    data: str
-    log_index: int
-    removed: bool
-    topics: list[str]
-    transaction_hash: str
-    transaction_index: int
-
-    @classmethod
-    def from_json_rpc_dict(cls, data: dict[str, Any]) -> Result[Log]:
-        try:
-            return Ok(
-                Log(
-                    address=data["address"],
-                    block_hash=data["blockHash"],
-                    block_number=int(data["blockNumber"], 16),
-                    data=data["data"],
-                    log_index=int(data["logIndex"], 16),
-                    removed=data["removed"],
-                    topics=data["topics"],
-                    transaction_hash=data["transactionHash"],
-                    transaction_index=int(data["transactionIndex"], 16),
-                ),
-            )
-        except Exception as err:
-            return Err(f"exception: {err}")
-
-
-class TxData(BaseModel):
-    block_number: int | None  # for pending tx it can be none
-    from_: str
-    to: str | None
-    gas: int
-    gas_price: int
-    value: int
-    hash: str
-    input: str
-    nonce: int
-    v: int
-    r: str
-    s: str
-
-
-def rpc_call(
-    *,
-    nodes: Nodes,
+async def rpc_call(
+    node: str,
     method: str,
-    params: list[object],
+    params: Sequence[object],
+    timeout: float,
+    proxy: str | None,
     id_: int = 1,
-    timeout: int = 10,
-    proxies: Proxies = None,
-    attempts: int = 1,
 ) -> Result[Any]:
     data = {"jsonrpc": "2.0", "method": method, "params": params, "id": id_}
-    res: Result[Any] = Err("not started yet")
-    for _ in range(attempts):
-        node = random_node(nodes)
-        res = _http_call(node, data, timeout, random_proxy(proxies)) if node.startswith("http") else _ws_call(node, data, timeout)
-        if isinstance(res, Ok):
-            return res
-    return res
+    if node.startswith("http"):
+        return await _http_call(node, data, timeout, proxy)
+    return await _ws_call(node, data, timeout)
 
 
-def _http_call(node: str, data: dict[str, object], timeout: int, proxy: str | None) -> Result[Any]:
-    res = hr(node, method="POST", proxy=proxy, timeout=timeout, params=data, json_params=True)
+async def _http_call(node: str, data: dict[str, object], timeout: float, proxy: str | None) -> Result[Any]:
+    res = await http_request(node, method="POST", proxy=proxy, timeout=timeout, json=data)
+    if res.is_err():
+        return res.to_err()
     try:
-        if res.is_error():
-            return res.to_err_result()
-
-        err = res.json.get("error", {}).get("message", "")
+        parsed_body = res.parse_json_body()
+        err = parsed_body.get("error", {}).get("message", "")
         if err:
-            return res.to_err_result(f"service_error: {err}")
-        if "result" in res.json:
-            return res.to_ok_result(res.json["result"])
+            return res.to_err(f"service_error: {err}")
+        if "result" in parsed_body:
+            return res.to_ok(parsed_body["result"])
+        return res.to_ok("unknown_response")
+    except Exception as e:
+        return res.to_err(e)
 
-        return res.to_err_result("unknown_response")
-    except Exception as err:
-        return res.to_err_result(f"exception: {err}")
 
-
-def _ws_call(node: str, data: dict[str, object], timeout: int) -> Result[Any]:
+async def _ws_call(node: str, data: dict[str, object], timeout: float) -> Result[Any]:
     try:
-        ws = websocket.create_connection(node, timeout=timeout)
-        ws.send(json.dumps(data))
-        response = json.loads(ws.recv())
-        ws.close()
-        err = response.get("error", {}).get("message", "")
+        async with asyncio.timeout(timeout):
+            async with websockets.connect(node) as ws:
+                await ws.send(json.dumps(data))
+                response = json.loads(await ws.recv())
+
+        err = pydash.get(response, "error.message")
         if err:
-            return Err(f"service_error: {err}")
+            return Result.err(f"service_error: {err}", {"response": response})
         if "result" in response:
-            return Ok(response["result"])
-        return Err(f"unknown_response: {response}")
+            return Result.ok(response["result"], {"response": response})
+        return Result.err("unknown_response", {"response": response})
     except TimeoutError:
-        return Err("timeout")
-    except Exception as err:
-        return Err(f"exception: {err}")
+        return Result.err("timeout")
+    except Exception as e:
+        return Result.err(e)
 
 
-def eth_block_number(rpc_urls: Nodes, timeout: int = 10, proxies: Proxies = None, attempts: int = 1) -> Result[int]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_blockNumber",
-        params=[],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    ).and_then(hex_str_to_int)
+# -- start eth rpc calls --
 
 
-def eth_chain_id(rpc_urls: Nodes, timeout: int = 10, proxies: Proxies = None, attempts: int = 1) -> Result[int]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_chainId",
-        params=[],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    ).and_then(hex_str_to_int)
+async def eth_block_number(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    return (await rpc_call(node, "eth_blockNumber", [], timeout, proxy)).map(_hex_str_to_int)
 
 
-def net_peer_count(rpc_urls: Nodes, timeout: int = 10, proxies: Proxies = None, attempts: int = 1) -> Result[int]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="net_peerCount",
-        params=[],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    ).and_then(hex_str_to_int)
+async def eth_get_balance(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    return (await rpc_call(node, "eth_getBalance", [address, "latest"], timeout, proxy)).map(_hex_str_to_int)
 
 
-def web3_client_version(rpc_urls: Nodes, timeout: int = 10, proxies: Proxies = None, attempts: int = 1) -> Result[str]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="web3_clientVersion",
-        params=[],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    )
+async def eth_chain_id(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    return (await rpc_call(node, "eth_chainId", [], timeout, proxy)).map(_hex_str_to_int)
 
 
-def net_version(nodes: Nodes, timeout: int = 10, proxies: Proxies = None, attempts: int = 1) -> Result[str]:
-    return rpc_call(nodes=nodes, method="net_version", params=[], timeout=timeout, proxies=proxies, attempts=attempts)
-
-
-def eth_get_code(rpc_urls: Nodes, address: str, timeout: int = 10, proxies: Proxies = None, attempts: int = 1) -> Result[str]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_getCode",
-        params=[address, "latest"],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    )
-
-
-def eth_send_raw_transaction(
-    rpc_urls: Nodes,
-    raw_tx: str,
-    timeout: int = 10,
-    proxies: Proxies = None,
-    attempts: int = 1,
-) -> Result[str]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_sendRawTransaction",
-        params=[raw_tx],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    )
-
-
-def eth_get_balance(rpc_urls: Nodes, address: str, timeout: int = 10, proxies: Proxies = None, attempts: int = 1) -> Result[int]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_getBalance",
-        params=[address, "latest"],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    ).and_then(hex_str_to_int)
-
-
-def eth_get_transaction_count(
-    rpc_urls: Nodes,
-    address: str,
-    timeout: int = 10,
-    proxies: Proxies = None,
-    attempts: int = 1,
-) -> Result[int]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_getTransactionCount",
-        params=[address, "latest"],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    ).and_then(hex_str_to_int)
-
-
-def eth_get_block_by_number(
-    rpc_urls: Nodes,
-    block_number: BlockIdentifier,
-    full_transaction: bool = False,
-    timeout: int = 10,
-    proxies: Proxies = None,
-    attempts: int = 1,
+async def eth_get_block_by_number(
+    node: str, block_number: BlockIdentifier, full_transaction: bool = False, timeout: float = TIMEOUT, proxy: str | None = None
 ) -> Result[dict[str, Any]]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_getBlockByNumber",
-        params=[hex(block_number) if isinstance(block_number, int) else block_number, full_transaction],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    )
+    params = [hex(block_number) if isinstance(block_number, int) else block_number, full_transaction]
+    return await rpc_call(node, "eth_getBlockByNumber", params, timeout, proxy)
 
 
-def eth_get_logs(
-    rpc_urls: Nodes,
-    *,
-    address: str | None = None,
-    topics: list[str] | None = None,
-    from_block: BlockIdentifier | None = None,
-    to_block: BlockIdentifier | None = None,
-    timeout: int = 10,
-    proxies: Proxies = None,
-    attempts: int = 1,
-) -> Result[list[Log]]:
-    params: dict[str, object] = {}
-    if address:
-        params["address"] = address
-    if isinstance(from_block, int):
-        params["fromBlock"] = hex(from_block)
-    else:
-        params["fromBlock"] = "earliest"
-    if isinstance(to_block, int):
-        params["toBlock"] = hex(to_block)
-    if topics:
-        params["topics"] = topics
-
-    res = rpc_call(nodes=rpc_urls, method="eth_getLogs", params=[params], proxies=proxies, attempts=attempts, timeout=timeout)
-    if isinstance(res, Err):
-        return res
-
-    result: list[Log] = []
-    for log_data in res.ok:
-        log_res = Log.from_json_rpc_dict(log_data)
-        if isinstance(log_res, Err):
-            return Err(log_res.err, data=res.data)
-        result.append(log_res.ok)
-    return Ok(result, data=res.data)
+async def eth_get_transaction_count(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    return (await rpc_call(node, "eth_getTransactionCount", [address, "latest"], timeout, proxy)).map(_hex_str_to_int)
 
 
-def eth_get_transaction_receipt(
-    rpc_urls: Nodes,
-    tx_hash: str,
-    timeout: int = 10,
-    proxies: Proxies = None,
-    attempts: int = 1,
-) -> Result[TxReceipt]:
-    res = rpc_call(
-        nodes=rpc_urls,
-        method="eth_getTransactionReceipt",
-        params=[tx_hash],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    )
-    if isinstance(res, Err):
-        return res
-
-    if res.ok is None:
-        return Err("no_receipt", data=res.data)
-
-    try:
-        status = None
-        receipt = cast(dict[str, Any], res.ok)
-        if "status" in receipt:
-            status = int(receipt["status"], 16)
-        return Ok(
-            TxReceipt(
-                tx_hash=tx_hash,
-                tx_index=int(receipt["transactionIndex"], 16),
-                block_number=int(receipt["blockNumber"], 16),
-                from_address=receipt["from"],
-                to_address=receipt.get("to"),
-                contract_address=receipt.get("contractAddress"),
-                status=status,
-            ),
-            data=res.data,
-        )
-    except Exception as err:
-        return Err(f"exception: {err}", data=res.data)
-
-
-def eth_get_transaction_by_hash(
-    rpc_urls: Nodes,
-    tx_hash: str,
-    timeout: int = 10,
-    proxies: Proxies = None,
-    attempts: int = 1,
-) -> Result[TxData]:
-    res = rpc_call(
-        nodes=rpc_urls,
-        method="eth_getTransactionByHash",
-        params=[tx_hash],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    )
-    if isinstance(res, Err):
-        return res
-    if res.ok is None:
-        return Err("not_found", data=res.data)
-
-    try:
-        tx = res.ok
-        return Ok(
-            TxData(
-                block_number=int(tx["blockNumber"], 16) if tx["blockNumber"] is not None else None,
-                from_=tx["from"],
-                to=tx.get("to"),
-                gas=int(tx["gas"], 16),
-                gas_price=int(tx["gasPrice"], 16),
-                value=int(tx["value"], 16),
-                nonce=int(tx["nonce"], 16),
-                input=tx["input"],
-                hash=tx_hash,
-                v=int(tx["v"], 16),
-                r=tx.get("r"),
-                s=tx.get("s"),
-            ),
-            data=res.data,
-        )
-
-    except Exception as err:
-        return Err(f"exception: {err}", data=res.data)
-
-
-def eth_call(
-    rpc_urls: Nodes,
-    to: str,
-    data: str,
-    timeout: int = 10,
-    proxies: Proxies = None,
-    attempts: int = 1,
-) -> Result[str]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_call",
-        params=[{"to": to, "data": data}, "latest"],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    )
-
-
-def eth_estimate_gas(
-    rpc_urls: Nodes,
+async def eth_estimate_gas(
+    node: str,
     from_: str,
     to: str | None = None,
     value: int | None = 0,
     data: str | None = None,
     type_: Literal["0x0", "0x2"] | None = None,
-    timeout: int = 10,
-    proxies: Proxies = None,
-    attempts: int = 1,
+    timeout: float = TIMEOUT,
+    proxy: str | None = None,
 ) -> Result[int]:
     params: dict[str, Any] = {"from": from_}
     if to:
@@ -408,68 +109,165 @@ def eth_estimate_gas(
         params["value"] = hex(value)
     if type_:
         params["type"] = type_
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_estimateGas",
-        params=[params],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    ).and_then(hex_str_to_int)
+    return (await rpc_call(node, "eth_estimateGas", [params], timeout, proxy)).map(_hex_str_to_int)
 
 
-def eth_gas_price(rpc_urls: Nodes, timeout: int = 10, proxies: Proxies = None, attempts: int = 1) -> Result[int]:
-    return rpc_call(
-        nodes=rpc_urls,
-        method="eth_gasPrice",
-        params=[],
-        timeout=timeout,
-        proxies=proxies,
-        attempts=attempts,
-    ).and_then(hex_str_to_int)
+async def eth_send_raw_transaction(node: str, raw_tx: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str]:
+    return await rpc_call(node, "eth_sendRawTransaction", [raw_tx], timeout, proxy)
 
 
-def eth_syncing(rpc_urls: Nodes, timeout: int = 10, proxies: Proxies = None, attempts: int = 1) -> Result[bool | dict[str, int]]:
-    res = rpc_call(nodes=rpc_urls, method="eth_syncing", params=[], timeout=timeout, proxies=proxies, attempts=attempts)
-    if isinstance(res, Err):
-        return res
+async def eth_get_transaction_receipt(
+    node: str, tx_hash: str, timeout: float = TIMEOUT, proxy: str | None = None
+) -> Result[TxReceipt]:
+    def convert_hex_str_ints(receipt: dict[str, Any]) -> TxReceipt:
+        int_fields = {
+            "blockNumber",
+            "cumulativeGasUsed",
+            "effectiveGasPrice",
+            "gasUsed",
+            "status",
+            "transactionIndex",
+            "type",
+        }
 
-    if isinstance(res.ok, dict):
-        result = {}
-        for k, v in res.ok.items():
-            if v:
-                result[k] = int(v, 16)
+        converted: dict[str, Any] = {}
+        for key, value in receipt.items():
+            if key in int_fields and isinstance(value, str) and value.startswith("0x"):
+                converted[key] = int(value, 16)
             else:
-                result[k] = v
-        if result.get("currentBlock") and result.get("highestBlock"):
-            result["remaining"] = result["highestBlock"] - result["currentBlock"]
-        return Ok(result, res.data)
+                converted[key] = value
 
-    return res
+        return cast(TxReceipt, converted)
 
-
-def get_tx_status(rpc_urls: Nodes, tx_hash: str, timeout: int = 5, proxies: Proxies = None, attempts: int = 5) -> Result[int]:
-    res: Result[int] = Err("not started yet")
-    for _ in range(attempts):
-        node = cast(str, random_choice(rpc_urls))
-        cast(str | None, random_choice(proxies))
-        receipt_res = eth_get_transaction_receipt(node, tx_hash, timeout, proxies=proxies, attempts=1)
-        if isinstance(receipt_res, Err) and receipt_res.err == "no_receipt":
-            return receipt_res
-        if isinstance(receipt_res, Ok) and receipt_res.ok.status is None:
-            return Err("no_status", data=res.data)
-
-        if isinstance(receipt_res, Ok):
-            return Ok(cast(int, receipt_res.ok.status), data=receipt_res.data)
-        res = receipt_res
-
-    return res
-
-
-def get_base_fee_per_gas(rpc_urls: Nodes, timeout: int = 5, proxies: Proxies = None, attempts: int = 5) -> Result[int]:
-    res = eth_get_block_by_number(rpc_urls, "latest", False, timeout=timeout, proxies=proxies, attempts=attempts)
-    if isinstance(res, Err):
+    res = await rpc_call(node, "eth_getTransactionReceipt", [tx_hash], timeout, proxy)
+    if res.is_err():
         return res
-    if "baseFeePerGas" in res.ok:
-        return Ok(int(res.ok["baseFeePerGas"], 16), data=res.data)
-    return Err("no_base_fee_per_gas", data=res.data)
+
+    if res.unwrap() is None:
+        return Result.err("no_receipt", res.extra)
+
+    try:
+        return Result.ok(convert_hex_str_ints(res.unwrap()), res.extra)
+    except Exception as e:
+        return Result.err(e, res.extra)
+
+
+# -- end eth rpc calls --
+
+# -- start erc20 rpc calls --
+
+
+async def erc20_balance(node: str, token: str, wallet: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    data = "0x70a08231000000000000000000000000" + wallet[2:]
+    params = [{"to": token, "data": data}, "latest"]
+    return (await rpc_call(node, "eth_call", params, timeout, proxy)).map(_hex_str_to_int)
+
+
+async def erc20_name(node: str, token: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str]:
+    params = [{"to": token, "data": "0x06fdde03"}, "latest"]
+    return (await rpc_call(node, "eth_call", params, timeout, proxy)).map(_normalize_str)
+
+
+async def erc20_symbol(node: str, token: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str]:
+    params = [{"to": token, "data": "0x95d89b41"}, "latest"]
+    return (await rpc_call(node, "eth_call", params, timeout, proxy)).map(_normalize_str)
+
+
+async def erc20_decimals(node: str, token: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    params = [{"to": token, "data": "0x313ce567"}, "latest"]
+    res = await rpc_call(node, "eth_call", params, timeout, proxy)
+    if res.is_err():
+        return res
+    try:
+        if res.unwrap() == "0x":
+            return res.with_error("no_decimals")
+        value = res.unwrap()
+        result = eth_utils.to_int(hexstr=value[0:66]) if len(value) > 66 else eth_utils.to_int(hexstr=value)
+        return res.with_value(result)
+    except Exception as e:
+        return res.with_error(e)
+
+
+# -- end erc20 rpc calls --
+
+
+async def ens_name(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str | None]:
+    ens_registry_address: str = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
+    func_selector_resolver: str = "0x0178b8bf"  # resolver(bytes32)
+    func_selector_name: str = "0x691f3431"  # name(bytes32)
+
+    checksum_addr = eth_utils.to_checksum_address(address)
+    reverse_name = checksum_addr.lower()[2:] + ".addr.reverse"
+    name_hash_hex = ens.utils.normal_name_to_hash(reverse_name).hex()
+
+    resolver_data = func_selector_resolver + name_hash_hex
+
+    resolver_params = [{"to": ens_registry_address, "data": resolver_data}, "latest"]
+
+    resolver_res = await rpc_call(node, method="eth_call", params=resolver_params, timeout=timeout, proxy=proxy)
+    if resolver_res.is_err():
+        return resolver_res
+
+    extra = {"resolver_response": resolver_res.to_dict()}
+
+    if resolver_res.is_ok() and len(resolver_res.unwrap()) != 66:
+        return Result.ok(None, extra)
+
+    resolver_address = eth_utils.to_checksum_address("0x" + resolver_res.unwrap()[-40:])
+
+    name_data: str = func_selector_name + name_hash_hex
+    name_params = [{"to": resolver_address, "data": name_data}, "latest"]
+
+    name_res = await rpc_call(node, "eth_call", name_params, timeout=timeout, proxy=proxy)
+
+    extra["name_response"] = name_res.to_dict()
+
+    if name_res.is_err():
+        return Result.err(name_res.unwrap_error(), extra)
+
+    if name_res.unwrap() == "0x":
+        return Result.ok(None, extra)
+
+    try:
+        hex_data = name_res.unwrap()
+        length_hex = hex_data[66:130]
+        str_len = int(length_hex, 16) * 2
+        name_hex = hex_data[130 : 130 + str_len]
+        return Result.ok(bytes.fromhex(name_hex).decode("utf-8"), extra)
+    except Exception as e:
+        return Result.err(e, extra)
+
+
+# -- start other --
+
+
+async def get_base_fee_per_gas(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    res = await eth_get_block_by_number(node, "latest", False, timeout=timeout, proxy=proxy)
+    if res.is_err():
+        return Result.err(res.unwrap_error(), res.extra)
+    if "baseFeePerGas" in res.unwrap():
+        return res.with_value(int(res.unwrap()["baseFeePerGas"], 16))
+    return Result.err("no_base_fee_per_gas", res.extra)
+
+
+async def get_tx_status(node: str, tx_hash: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    res = await eth_get_transaction_receipt(node, tx_hash, timeout=timeout, proxy=proxy)
+    if res.is_err():
+        return Result.err(res.unwrap_error(), res.extra)
+    status = res.unwrap().get("status")
+    if status is None:
+        return Result.err("no_status", res.extra)
+    return Result.ok(status, res.extra)
+
+
+# -- end other --
+
+# -- utils --
+
+
+def _hex_str_to_int(value: str) -> int:
+    return int(value, 16)
+
+
+def _normalize_str(value: str) -> str:
+    return "".join(filter(lambda x: x in string.printable, eth_utils.to_text(hexstr=value))).strip()
