@@ -1,10 +1,10 @@
 [project]
 name = "mm-eth"
-version = "0.5.17"
+version = "0.6.0"
 description = ""
 requires-python = ">=3.12"
 dependencies = [
-    "mm-crypto-utils>=0.2.15",
+    "mm-crypto-utils>=0.3.3",
     "websocket-client~=1.8.0",
     "aiohttp-socks~=0.10.1",
     "web3~=7.10.0",
@@ -21,12 +21,12 @@ build-backend = "hatchling.build"
 dev-dependencies = [
     "pytest~=8.3.5",
     "pytest-xdist~=3.6.1",
-    "ruff~=0.11.5",
+    "ruff~=0.11.6",
     "pip-audit~=2.9.0",
     "bandit~=1.8.3",
     "mypy~=1.15.0",
     "types-pyyaml>=6.0.12.20250402",
-    "anyio>=4.9.0",
+    "pytest-asyncio~=0.26.0",
 ]
 
 [tool.mypy]
@@ -84,4 +84,4 @@ exclude_dirs = ["tests"]
 skips = ["B311"]
 
 [tool.pytest.ini_options]
-markers = ["infura"]
+asyncio_default_fixture_loop_scope = "function"
