@@ -21,6 +21,11 @@ async def test_eth_get_balance(mainnet, address_bnb, random_proxy):
     assert res.unwrap() > 1
 
 
+async def test_eth_get_block_by_number(mainnet, random_proxy):
+    res = await rpc.eth_get_block_by_number(mainnet, 8972973, True, proxy=random_proxy)
+    assert res.unwrap()["transactions"][0]["hash"] == "0x1bc1f41a0999c4ff4afe8f17704400ba0328b8b8bf60681fb809969c2127054a"
+
+
 async def test_erc20_balance(mainnet, address_tether, address_bnb, random_proxy):
     res = await rpc.erc20_balance(mainnet, token=address_tether, wallet=address_bnb, proxy=random_proxy)
     assert res.unwrap() > 1_000_000

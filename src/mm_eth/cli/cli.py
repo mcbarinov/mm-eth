@@ -6,7 +6,8 @@ import typer
 from mm_std import PrintFormat, print_plain
 
 from mm_eth.account import DEFAULT_DERIVATION_PATH
-from mm_eth.cli.cmd.wallet import mnemonic_cmd, node_cmd, private_key_cmd
+from mm_eth.cli.cmd.wallet import mnemonic_cmd, private_key_cmd
+from mm_eth.cli.cmd import node_cmd
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_enable=False, add_completion=False)
 

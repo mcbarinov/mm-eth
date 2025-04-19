@@ -8,6 +8,7 @@ import ens.utils
 import eth_utils
 import pydash
 import websockets
+from eth_typing import BlockIdentifier
 from mm_std import Result, http_request
 
 TIMEOUT = 7.0
@@ -72,9 +73,16 @@ async def eth_block_number(node: str, timeout: float = TIMEOUT, proxy: str | Non
 async def eth_get_balance(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
     return (await rpc_call(node, "eth_getBalance", [address, "latest"], timeout, proxy)).map(_hex_str_to_int)
 
+
 async def eth_chain_id(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
     return (await rpc_call(node, "eth_chainId", [], timeout, proxy)).map(_hex_str_to_int)
 
+
+async def eth_get_block_by_number(
+    node: str, block_number: BlockIdentifier, full_transaction: bool = False, timeout: float = TIMEOUT, proxy: str | None = None
+) -> Result[dict[str, Any]]:
+    params = [hex(block_number) if isinstance(block_number, int) else block_number, full_transaction]
+    return await rpc_call(node, "eth_getBlockByNumber", params, timeout, proxy)
 
 
 # -- end eth rpc calls --
@@ -161,6 +169,23 @@ async def ens_name(node: str, address: str, timeout: float = TIMEOUT, proxy: str
         return Result.ok(bytes.fromhex(name_hex).decode("utf-8"), extra)
     except Exception as e:
         return Result.err(e, extra)
+
+
+# -- start other --
+
+
+async def get_base_fee_per_gas(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    res = await eth_get_block_by_number(node, "latest", False, timeout=timeout, proxy=proxy)
+    if res.is_err():
+        return Result.err(res.unwrap_error(), res.extra)
+    if "baseFeePerGas" in res.unwrap():
+        return res.with_value(int(res.unwrap()["baseFeePerGas"], 16))
+    return Result.err("no_base_fee_per_gas", res.extra)
+
+
+# -- end other --
+
+# -- utils --
 
 
 def _hex_str_to_int(value: str) -> int:

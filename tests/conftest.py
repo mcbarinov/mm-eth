@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from mm_crypto_utils import proxy
 from typer.testing import CliRunner
 
+from mm_eth.anvil import Anvil
+
 load_dotenv()
 
 
@@ -76,3 +78,16 @@ def random_proxy(proxies: list[str]) -> str:
 @pytest.fixture
 def cli_runner() -> CliRunner:
     return CliRunner()
+
+
+@pytest.fixture()
+async def anvil(mnemonic):
+    res = await Anvil.launch(mnemonic=mnemonic)
+    if res.is_err():
+        raise RuntimeError(f"can't start anvil: {res.unwrap_error()}")
+
+    a = res.unwrap()
+    try:
+        yield a
+    finally:
+        a.stop()
