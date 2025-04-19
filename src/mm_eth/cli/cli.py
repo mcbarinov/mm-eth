@@ -1,11 +1,12 @@
+import asyncio
 import importlib.metadata
 from typing import Annotated
 
 import typer
-from mm_std import print_plain
+from mm_std import PrintFormat, print_plain
 
 from mm_eth.account import DEFAULT_DERIVATION_PATH
-from mm_eth.cli.cmd.wallet import mnemonic_cmd, private_key_cmd
+from mm_eth.cli.cmd.wallet import mnemonic_cmd, node_cmd, private_key_cmd
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_enable=False, add_completion=False)
 
@@ -38,6 +39,15 @@ def mnemonic_command(  # nosec
 @wallet_app.command(name="private-key", help="Print an address for a private key")
 def private_key_command(private_key: str) -> None:
     private_key_cmd.run(private_key)
+
+
+@app.command(name="node", help="Check RPC url")
+def node_command(
+    urls: Annotated[list[str], typer.Argument()],
+    proxy: Annotated[str | None, typer.Option("--proxy", "-p", help="Proxy")] = None,
+    print_format: Annotated[PrintFormat, typer.Option("--format", "-f", help="Print format")] = PrintFormat.TABLE,
+) -> None:
+    asyncio.run(node_cmd.run(urls, proxy, print_format))
 
 
 def version_callback(value: bool) -> None:

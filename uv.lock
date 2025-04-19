@@ -691,6 +691,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp-socks" },
     { name = "mm-crypto-utils" },
+    { name = "mm-std" },
     { name = "typer" },
     { name = "web3" },
     { name = "websocket-client" },
@@ -712,6 +713,7 @@ dev = [
 requires-dist = [
     { name = "aiohttp-socks", specifier = "~=0.10.1" },
     { name = "mm-crypto-utils", specifier = ">=0.3.5" },
+    { name = "mm-std", specifier = "~=0.4.8" },
     { name = "typer", specifier = ">=0.15.2" },
     { name = "web3", specifier = "~=7.10.0" },
     { name = "websocket-client", specifier = "~=1.8.0" },
@@ -731,7 +733,7 @@ dev = [
 
 [[package]]
 name = "mm-std"
-version = "0.4.7"
+version = "0.4.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -747,7 +749,7 @@ dependencies = [
     { name = "tomlkit" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f0/93/b73b4e29baa69f8c6f7524cea742ac3973e14b1a9583da0d63852d320b13/mm_std-0.4.7-py3-none-any.whl", hash = "sha256:da58d66595fd70788d6dd5112d83e6b18e560e00e5c113c407579d088702e3fe", size = 23820 },
+    { url = "https://files.pythonhosted.org/packages/4b/51/53ff6f15ac443b2e83027620cc4742669d421925256f37dd999297ae7d37/mm_std-0.4.8-py3-none-any.whl", hash = "sha256:aa496d6c780473460aced2c2a6fd067020fd9da45cef90812214d4a3e6b05178", size = 23821 },
 ]
 
 [[package]]

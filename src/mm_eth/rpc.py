@@ -62,12 +62,24 @@ async def _ws_call(node: str, data: dict[str, object], timeout: float) -> Result
         return Result.err(e)
 
 
+# -- start eth rpc calls --
+
+
 async def eth_block_number(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
     return (await rpc_call(node, "eth_blockNumber", [], timeout, proxy)).map(_hex_str_to_int)
 
 
 async def eth_get_balance(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
     return (await rpc_call(node, "eth_getBalance", [address, "latest"], timeout, proxy)).map(_hex_str_to_int)
+
+async def eth_chain_id(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    return (await rpc_call(node, "eth_chainId", [], timeout, proxy)).map(_hex_str_to_int)
+
+
+
+# -- end eth rpc calls --
+
+# -- start erc20 rpc calls --
 
 
 async def erc20_balance(node: str, token: str, wallet: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
@@ -99,6 +111,9 @@ async def erc20_decimals(node: str, token: str, timeout: float = TIMEOUT, proxy:
         return res.with_value(result)
     except Exception as e:
         return res.with_error(e)
+
+
+# -- end erc20 rpc calls --
 
 
 async def ens_name(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str | None]:

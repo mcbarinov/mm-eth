@@ -11,6 +11,11 @@ async def test_eth_get_block_by_number_with_wss(mainnet_ws):
     assert res.unwrap() > 9_000_000
 
 
+async def test_eth_chain_id(mainnet, random_proxy):
+    res = await rpc.eth_chain_id(mainnet, proxy=random_proxy)
+    assert res.unwrap() == 1
+
+
 async def test_eth_get_balance(mainnet, address_bnb, random_proxy):
     res = await rpc.eth_get_balance(mainnet, address_bnb, proxy=random_proxy)
     assert res.unwrap() > 1
