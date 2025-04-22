@@ -124,6 +124,16 @@ async def erc20_decimals(retries: int, nodes: Nodes, proxies: Proxies, *, token:
 
 # -- end erc20 rpc calls --
 
+# -- start ens calls --
+
+
+async def ens_name(retries: int, nodes: Nodes, proxies: Proxies, *, address: str, timeout: float = TIMEOUT) -> Result[str | None]:
+    return await retry_with_node_and_proxy(
+        retries, nodes, proxies, lambda node, proxy: rpc.ens_name(node, address, timeout, proxy)
+    )
+
+
+# -- stop ens calls --
 
 # -- start other --
 

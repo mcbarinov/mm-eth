@@ -190,6 +190,8 @@ async def erc20_decimals(node: str, token: str, timeout: float = TIMEOUT, proxy:
 
 # -- end erc20 rpc calls --
 
+# -- start ens calls --
+
 
 async def ens_name(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str | None]:
     ens_registry_address: str = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
@@ -237,6 +239,8 @@ async def ens_name(node: str, address: str, timeout: float = TIMEOUT, proxy: str
     except Exception as e:
         return Result.err(e, extra)
 
+
+# -- stop ens calls --
 
 # -- start other --
 
