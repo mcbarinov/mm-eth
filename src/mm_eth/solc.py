@@ -4,7 +4,8 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from mm_std import Result, run_command
+import mm_std
+from mm_result import Result
 
 
 @dataclass
@@ -31,7 +32,7 @@ def solc(contract_name: str, contract_path: Path, tmp_dir: Path) -> Result[SolcR
         work_dir_created = True
 
         cmd = f"solc -o '{work_dir}' --abi --bin --optimize '{contract_path}'"
-        result = run_command(cmd)
+        result = mm_std.shell(cmd)
         if result.code != 0:
             return Result.err(f"solc error: {result.stderr}")
 

@@ -1,10 +1,11 @@
 import json
 import os
 
+import mm_cryptocurrency
 import pytest
 from dotenv import load_dotenv
 from eth_typing import ABI
-from mm_crypto_utils import proxy
+from mm_cryptocurrency import fetch_proxies_sync
 from typer.testing import CliRunner
 
 from mm_eth.anvil import Anvil
@@ -14,12 +15,18 @@ load_dotenv()
 
 @pytest.fixture
 def mainnet() -> str:
-    return os.getenv("MAINNET_RPC")
+    res = os.getenv("MAINNET_RPC")
+    if not res:
+        raise RuntimeError("MAINNET_RPC environment variable is not set")
+    return res
 
 
 @pytest.fixture
 def mainnet_ws() -> str:
-    return os.getenv("MAINNET_RPC_WS")
+    res = os.getenv("MAINNET_RPC_WS")
+    if not res:
+        raise RuntimeError("MAINNET_RPC_WS environment variable is not set")
+    return res
 
 
 @pytest.fixture
@@ -89,12 +96,15 @@ def erc20_token_bin() -> str:
 
 @pytest.fixture(scope="session")
 def proxies() -> list[str]:
-    return proxy.fetch_proxies_or_fatal_sync(os.getenv("PROXIES_URL"))
+    return fetch_proxies_sync(os.getenv("PROXIES_URL")).unwrap()
 
 
 @pytest.fixture()
 def random_proxy(proxies: list[str]) -> str:
-    return proxy.random_proxy(proxies)
+    res = mm_cryptocurrency.random_proxy(proxies)
+    if not res:
+        raise RuntimeError("No proxies available")
+    return res
 
 
 @pytest.fixture
@@ -106,7 +116,7 @@ def cli_runner() -> CliRunner:
 async def anvil(mnemonic):
     res = await Anvil.launch(mnemonic=mnemonic)
     if res.is_err():
-        raise RuntimeError(f"can't start anvil: {res.unwrap_error()}")
+        raise RuntimeError(f"can't start anvil: {res.unwrap_err()}")
 
     a = res.unwrap()
     try:

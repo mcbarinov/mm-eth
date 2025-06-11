@@ -1,7 +1,7 @@
 from collections.abc import Callable
 
 import eth_utils
-from mm_crypto_utils import AddressToPrivate, ConfigValidators, Transfer
+from mm_cryptocurrency import ConfigValidators, PrivateKeyMap, Transfer
 
 from mm_eth import account
 
@@ -18,28 +18,28 @@ def address_from_private(private_key: str) -> str:
 class Validators(ConfigValidators):
     @staticmethod
     def valid_eth_expression(var_name: str | None = None) -> Callable[[str], str]:
-        return ConfigValidators.valid_calc_int_expression(var_name, SUFFIX_DECIMALS)
+        return ConfigValidators.expression_with_vars(var_name, SUFFIX_DECIMALS)
 
     @staticmethod
     def valid_token_expression(var_name: str | None = None) -> Callable[[str], str]:
-        return ConfigValidators.valid_calc_int_expression(var_name, {"t": 6})
+        return ConfigValidators.expression_with_vars(var_name, {"t": 6})
 
     @staticmethod
     def valid_eth_or_token_expression(var_name: str | None = None) -> Callable[[str], str]:
-        return ConfigValidators.valid_calc_int_expression(var_name, SUFFIX_DECIMALS | {"t": 6})
+        return ConfigValidators.expression_with_vars(var_name, SUFFIX_DECIMALS | {"t": 6})
 
     @staticmethod
     def eth_transfers() -> Callable[[str], list[Transfer]]:
-        return ConfigValidators.transfers(is_address=eth_utils.is_address, to_lower=True)
+        return ConfigValidators.transfers(is_address=eth_utils.is_address, lowercase=True)
 
     @staticmethod
-    def eth_private_keys() -> Callable[[str], AddressToPrivate]:
+    def eth_private_keys() -> Callable[[str], PrivateKeyMap]:
         return ConfigValidators.private_keys(address_from_private)
 
     @staticmethod
     def eth_address() -> Callable[[str], str]:
-        return ConfigValidators.address(eth_utils.is_address, to_lower=True)
+        return ConfigValidators.address(eth_utils.is_address, lowercase=True)
 
     @staticmethod
     def eth_addresses(unique: bool) -> Callable[[str], list[str]]:
-        return ConfigValidators.addresses(unique, to_lower=True, is_address=eth_utils.is_address)
+        return ConfigValidators.addresses(unique, lowercase=True, is_address=eth_utils.is_address)

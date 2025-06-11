@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import socket
 import time
 from subprocess import Popen  # nosec
+from typing import cast
 
-from mm_std import Result
-from mm_std.net import get_free_local_port
+from mm_result import Result
 
 from mm_eth import account, rpc
 
@@ -54,3 +55,11 @@ class Anvil:
             port = get_free_local_port()
 
         return Result.err("can't launch anvil")
+
+
+def get_free_local_port() -> int:
+    sock = socket.socket()
+    sock.bind(("", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    return cast(int, port)

@@ -1,6 +1,6 @@
 import logging
 
-from mm_crypto_utils import Nodes, Proxies, VarInt
+from mm_cryptocurrency import Nodes, Proxies
 
 from mm_eth import retry
 from mm_eth.cli import calcs
@@ -14,7 +14,7 @@ async def get_nonce_with_logging(
     res = await retry.eth_get_transaction_count(retries, nodes, proxies, address=address)
     prefix = log_prefix or address
     if res.is_err():
-        logger.error(f"{prefix}: nonce error: {res.unwrap_error()}")
+        logger.error(f"{prefix}: nonce error: {res.unwrap_err()}")
         return None
     logger.debug(f"{prefix}: nonce={res.unwrap()}")
     return res.unwrap()
@@ -24,7 +24,7 @@ async def get_base_fee_with_logging(log_prefix: str | None, retries: int, nodes:
     prefix = get_log_prefix(log_prefix)
     res = await retry.get_base_fee_per_gas(retries, nodes, proxies)
     if res.is_err():
-        logger.error(f"{prefix}base_fee error, {res.unwrap_error()}")
+        logger.error(f"{prefix}base_fee error, {res.unwrap_err()}")
         return None
 
     logger.debug(f"{prefix}base_fee={res.unwrap()}")
@@ -38,7 +38,7 @@ async def calc_max_fee_with_logging(
         base_fee = await get_base_fee_with_logging(log_prefix, retries, nodes, proxies)
         if base_fee is None:
             return None
-        return calcs.calc_eth_expression(max_fee_expression, VarInt("base_fee", base_fee))
+        return calcs.calc_eth_expression(max_fee_expression, {"base_fee": base_fee})
 
     return calcs.calc_eth_expression(max_fee_expression)
 

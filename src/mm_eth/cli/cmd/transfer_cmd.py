@@ -4,10 +4,10 @@ import time
 from pathlib import Path
 from typing import Annotated, Literal, Self, cast
 
-import mm_crypto_utils
 from loguru import logger
-from mm_crypto_utils import AddressToPrivate, Transfer, VarInt
-from mm_std import BaseConfig, utc_now
+from mm_cryptocurrency import CryptocurrencyConfig, PrivateKeyMap, Transfer, calc_decimal_expression
+from mm_cryptocurrency.log import init_loguru
+from mm_std import utc_now
 from pydantic import AfterValidator, BeforeValidator, Field, model_validator
 from rich.console import Console
 from rich.live import Live
@@ -20,11 +20,11 @@ from mm_eth.cli.validators import Validators
 from mm_eth.converters import from_wei
 
 
-class Config(BaseConfig):
+class Config(CryptocurrencyConfig):
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
     chain_id: int
     transfers: Annotated[list[Transfer], BeforeValidator(Validators.eth_transfers())]
-    private_keys: Annotated[AddressToPrivate, BeforeValidator(Validators.eth_private_keys())]
+    private_keys: Annotated[PrivateKeyMap, BeforeValidator(Validators.eth_private_keys())]
     token: Annotated[str | None, AfterValidator(Validators.eth_address())] = None  # if None, then eth transfer
     token_decimals: int = -1
     max_fee: Annotated[str, AfterValidator(Validators.valid_eth_expression("base_fee"))]
@@ -33,7 +33,7 @@ class Config(BaseConfig):
     default_value: Annotated[str | None, AfterValidator(Validators.valid_eth_or_token_expression("balance"))] = None
     value_min_limit: Annotated[str | None, AfterValidator(Validators.valid_eth_or_token_expression())] = None
     gas: Annotated[str, AfterValidator(Validators.valid_eth_expression("estimate"))]
-    delay: Annotated[str | None, AfterValidator(Validators.valid_calc_decimal_value())] = None  # in seconds
+    delay: Annotated[str | None, AfterValidator(Validators.decimal_expression())] = None  # in seconds
     round_ndigits: int = 5
     proxies: Annotated[list[str], Field(default_factory=list), BeforeValidator(Validators.proxies())]
     wait_tx_timeout: int = 120
@@ -68,7 +68,7 @@ class Config(BaseConfig):
                 Validators.valid_eth_expression()(self.value_min_limit)
 
         if self.token:
-            self.token_decimals = (await retry.erc20_decimals(5, self.nodes, self.proxies, token=self.token)).unwrap_or_exit(
+            self.token_decimals = (await retry.erc20_decimals(5, self.nodes, self.proxies, token=self.token)).unwrap(
                 "can't get token decimals"
             )
 
@@ -102,13 +102,13 @@ async def run(params: TransferCmdParams) -> None:
 
 
 async def _run_transfers(config: Config, cmd_params: TransferCmdParams) -> None:
-    mm_crypto_utils.init_logger(cmd_params.debug, config.log_debug, config.log_info)
+    init_loguru(cmd_params.debug, config.log_debug, config.log_info)
     logger.info(f"transfer {cmd_params.config_path}: started at {utc_now()} UTC")
     logger.debug(f"config={config.model_dump(exclude={'private_keys'}) | {'version': cli_utils.get_version()}}")
     for i, transfer in enumerate(config.transfers):
         await _transfer(transfer, config, cmd_params)
         if config.delay is not None and i < len(config.transfers) - 1:
-            delay_value = mm_crypto_utils.calc_decimal_value(config.delay)
+            delay_value = calc_decimal_expression(config.delay)
             logger.info(f"delay {delay_value} seconds")
             if not cmd_params.emulate:
                 await asyncio.sleep(float(delay_value))
@@ -118,7 +118,7 @@ async def _run_transfers(config: Config, cmd_params: TransferCmdParams) -> None:
 async def _get_nonce(t: Transfer, config: Config) -> int | None:
     res = await retry.eth_get_transaction_count(5, config.nodes, config.proxies, address=t.from_address)
     if res.is_err():
-        logger.error(f"{t.log_prefix}: nonce error: {res.unwrap_error()}")
+        logger.error(f"{t.log_prefix}: nonce error: {res.unwrap_err()}")
         return None
     logger.debug(f"{t.log_prefix}: nonce={res.unwrap()}")
     return res.unwrap()
@@ -128,10 +128,10 @@ async def _calc_max_fee(t: Transfer, config: Config) -> int | None:
     if "base_fee" in config.max_fee.lower():
         base_fee_res = await retry.get_base_fee_per_gas(5, config.nodes, config.proxies)
         if base_fee_res.is_err():
-            logger.error(f"{t.log_prefix}: base_fee error: {base_fee_res.unwrap_error()}")
+            logger.error(f"{t.log_prefix}: base_fee error: {base_fee_res.unwrap_err()}")
             return None
         logger.debug(f"{t.log_prefix}: base_fee={base_fee_res.unwrap()}")
-        return calcs.calc_eth_expression(config.max_fee, VarInt("base_fee", base_fee_res.unwrap()))
+        return calcs.calc_eth_expression(config.max_fee, {"base_fee": base_fee_res.unwrap()})
     return calcs.calc_eth_expression(config.max_fee)
 
 
@@ -147,7 +147,7 @@ def check_max_fee_limit(t: Transfer, config: Config, max_fee: int) -> bool:
 
 
 async def _calc_gas(t: Transfer, config: Config) -> int | None:
-    var = None
+    variables: dict[str, int] | None = None
     if "estimate" in config.gas.lower():
         if config.token:
             res = await retry.eth_estimate_gas(
@@ -163,25 +163,25 @@ async def _calc_gas(t: Transfer, config: Config) -> int | None:
                 5, config.nodes, config.proxies, from_=t.from_address, to=t.to_address, value=12345
             )
         if res.is_err():
-            logger.error(f"{t.log_prefix}: gas estimate error: {res.unwrap_error()}")
+            logger.error(f"{t.log_prefix}: gas estimate error: {res.unwrap_err()}")
             return None
         logger.debug(f"{t.log_prefix}: gas estimate={res.unwrap()}")
-        var = VarInt("estimate", res.unwrap())
-    return calcs.calc_eth_expression(config.gas, var)
+        variables = {"estimate": res.unwrap()}
+    return calcs.calc_eth_expression(config.gas, variables)
 
 
 async def _calc_eth_value(t: Transfer, max_fee: int, gas: int, config: Config) -> int | None:
     value_expression = t.value.lower()
-    var = None
+    variables: dict[str, int] | None = None
     if "balance" in value_expression:
         res = await retry.eth_get_balance(5, config.nodes, config.proxies, address=t.from_address)
         if res.is_err():
-            logger.error(f"{t.log_prefix}: balance error: {res.unwrap_error()}")
+            logger.error(f"{t.log_prefix}: balance error: {res.unwrap_err()}")
             return None
         logger.debug(f"{t.log_prefix}: balance={res.unwrap()}")
-        var = VarInt("balance", res.unwrap())
+        variables = {"balance": res.unwrap()}
 
-    value = calcs.calc_eth_expression(value_expression, var)
+    value = calcs.calc_eth_expression(value_expression, variables)
     if "balance" in value_expression.lower():
         value = value - gas * max_fee
     return value
@@ -189,15 +189,15 @@ async def _calc_eth_value(t: Transfer, max_fee: int, gas: int, config: Config) -
 
 async def _calc_token_value(t: Transfer, config: Config) -> int | None:
     value_expression = t.value.lower()
-    var = None
+    variables: dict[str, int] | None = None
     if "balance" in value_expression:
         res = await retry.erc20_balance(5, config.nodes, config.proxies, token=cast(str, config.token), wallet=t.from_address)
         if res.is_err():
-            logger.error(f"{t.log_prefix}: balance error: {res.unwrap_error()}")
+            logger.error(f"{t.log_prefix}: balance error: {res.unwrap_err()}")
             return None
         logger.debug(f"{t.log_prefix}: balance={res.unwrap()}")
-        var = VarInt("balance", res.unwrap())
-    return calcs.calc_token_expression(value_expression, config.token_decimals, var)
+        variables = {"balance": res.unwrap()}
+    return calcs.calc_token_expression(value_expression, config.token_decimals, variables)
 
 
 async def _calc_value(t: Transfer, max_fee: int, gas: int, config: Config) -> int | None:
@@ -321,7 +321,7 @@ async def _send_tx(
         )
     res = await retry.eth_send_raw_transaction(5, config.nodes, config.proxies, raw_tx=signed_tx.raw_tx)
     if res.is_err():
-        logger.error(f"{transfer.log_prefix}: send tx error={res.unwrap_error()}")
+        logger.error(f"{transfer.log_prefix}: send tx error={res.unwrap_err()}")
         return None
     logger.debug(f"{transfer.log_prefix}: tx_hash={res.unwrap()}")
 

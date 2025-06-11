@@ -1,8 +1,9 @@
 import eth_utils
-from mm_std import PrintFormat, print_json, print_plain
+import mm_print
 
 from mm_eth import converters, rpc
 from mm_eth.cli import cli_utils
+from mm_eth.cli.cli import PrintFormat
 
 
 async def run(rpc_url: str, wallet_address: str, token_address: str | None, wei: bool, print_format: PrintFormat) -> None:
@@ -12,7 +13,7 @@ async def run(rpc_url: str, wallet_address: str, token_address: str | None, wei:
     # nonce
     result["nonce"] = (await rpc.eth_get_transaction_count(rpc_url, wallet_address)).value_or_error()
     if print_format == PrintFormat.PLAIN:
-        print_plain(f"nonce: {result['nonce']}")
+        mm_print.plain(f"nonce: {result['nonce']}")
 
     # eth balance
     result["eth_balance"] = (
@@ -21,18 +22,18 @@ async def run(rpc_url: str, wallet_address: str, token_address: str | None, wei:
         .value_or_error()
     )
     if print_format == PrintFormat.PLAIN:
-        print_plain(f"eth_balance: {result['eth_balance']}")
+        mm_print.plain(f"eth_balance: {result['eth_balance']}")
 
     if token_address:
         # token decimal
         result["token_decimal"] = (await rpc.erc20_decimals(rpc_url, token_address)).value_or_error()
         if print_format == PrintFormat.PLAIN:
-            print_plain(f"token_decimal: {result['token_decimal']}")
+            mm_print.plain(f"token_decimal: {result['token_decimal']}")
 
         # token symbol
         result["token_symbol"] = (await rpc.erc20_symbol(rpc_url, token_address)).value_or_error()
         if print_format == PrintFormat.PLAIN:
-            print_plain(f"token_symbol: {result['token_symbol']}")
+            mm_print.plain(f"token_symbol: {result['token_symbol']}")
 
         # token balance
         result["token_balance"] = (await rpc.erc20_balance(rpc_url, token_address, wallet_address)).value_or_error()
@@ -40,7 +41,7 @@ async def run(rpc_url: str, wallet_address: str, token_address: str | None, wei:
             result["token_balance"] = converters.from_wei(result["token_balance"], "t", decimals=result["token_decimal"])
 
         if print_format == PrintFormat.PLAIN:
-            print_plain(f"token_balance: {result['token_balance']}")
+            mm_print.plain(f"token_balance: {result['token_balance']}")
 
     if print_format == PrintFormat.JSON:
-        print_json(data=result)
+        mm_print.json(data=result)

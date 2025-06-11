@@ -1,4 +1,4 @@
-from mm_std import fatal, print_plain
+import mm_print
 
 from mm_eth import account
 
@@ -6,6 +6,6 @@ from mm_eth import account
 def run(private_key: str) -> None:
     res = account.private_to_address(private_key)
     if res.is_ok():
-        print_plain(res.unwrap())
+        mm_print.plain(res.unwrap())
     else:
-        fatal(f"invalid private key: '{private_key}'")
+        mm_print.fatal(f"invalid private key: '{private_key}'")

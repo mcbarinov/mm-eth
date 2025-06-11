@@ -6,7 +6,7 @@ clean:
     rm -rf .pytest_cache .mypy_cache .ruff_cache .coverage dist build src/*.egg-info
 
 build: clean lint audit test
-    uv build --wheel
+    uv build
 
 format:
     uv run ruff check --select I --fix src tests
@@ -20,7 +20,9 @@ lint: format
     uv run mypy src
 
 audit:
-    uv run pip-audit
+    uv export --no-dev --all-extras --format requirements-txt --no-emit-project > requirements.txt
+    uv run pip-audit -r requirements.txt --disable-pip
+    rm requirements.txt
     uv run bandit -r -c "pyproject.toml" src
 
 publish: build

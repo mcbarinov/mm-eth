@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from typing import Annotated
 
-from mm_std import BaseConfig, fatal
+import mm_print
+from mm_cryptocurrency import CryptocurrencyConfig
 from pydantic import BeforeValidator
 from rich.live import Live
 from rich.table import Table
@@ -11,7 +12,7 @@ from mm_eth.cli.cli_utils import BaseConfigParams
 from mm_eth.cli.validators import Validators
 
 
-class Config(BaseConfig):
+class Config(CryptocurrencyConfig):
     addresses: Annotated[list[str], BeforeValidator(Validators.eth_addresses(unique=True))]
     tokens: Annotated[list[str], BeforeValidator(Validators.eth_addresses(unique=True))]
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
@@ -63,7 +64,7 @@ async def run(params: BalancesCmdParams) -> None:
                 else:
                     row.append(str(converters.from_wei(balance, "eth", round_ndigits=config.round_ndigits)))
             else:
-                row.append(base_balance_res.unwrap_error())
+                row.append(base_balance_res.unwrap_err())
 
             for t in tokens:
                 token_balance_res = await retry.erc20_balance(5, config.nodes, None, token=t.address, wallet=address)
@@ -77,7 +78,7 @@ async def run(params: BalancesCmdParams) -> None:
                             str(converters.from_wei(token_balance, "t", round_ndigits=config.round_ndigits, decimals=t.decimals))
                         )
                 else:
-                    row.append(token_balance_res.unwrap_error())
+                    row.append(token_balance_res.unwrap_err())
 
             table.add_row(*row)
 
@@ -104,12 +105,12 @@ async def _get_tokens_info(config: Config) -> list[Token]:
     for address in config.tokens:
         decimals_res = await retry.erc20_decimals(5, config.nodes, None, token=address)
         if decimals_res.is_err():
-            fatal(f"can't get token {address} decimals: {decimals_res.unwrap_error()}")
+            mm_print.fatal(f"can't get token {address} decimals: {decimals_res.unwrap_err()}")
         decimal = decimals_res.unwrap()
 
         symbols_res = await retry.erc20_symbol(5, config.nodes, None, token=address)
         if symbols_res.is_err():
-            fatal(f"can't get token {address} symbol: {symbols_res.unwrap_error()}")
+            mm_print.fatal(f"can't get token {address} symbol: {symbols_res.unwrap_err()}")
         symbol = symbols_res.unwrap()
 
         result.append(Token(address=address, decimals=decimal, symbol=symbol))

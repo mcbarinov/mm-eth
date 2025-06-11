@@ -1,11 +1,19 @@
 import importlib.metadata
+from enum import Enum, unique
 from pathlib import Path
 
-from mm_std import fatal
+import mm_print
 from pydantic import BaseModel
 from rich.table import Table
 
 from mm_eth import rpc
+
+
+@unique
+class PrintFormat(str, Enum):
+    PLAIN = "plain"
+    TABLE = "table"
+    JSON = "json"
 
 
 def public_rpc_url(url: str | None) -> str:
@@ -36,9 +44,9 @@ class BaseConfigParams(BaseModel):
 
 async def check_nodes_for_chain_id(nodes: list[str], chain_id: int) -> None:
     for node in nodes:
-        res = (await rpc.eth_chain_id(node)).unwrap_or_exit("can't get chain_id")
+        res = (await rpc.eth_chain_id(node)).unwrap("can't get chain_id")
         if res != chain_id:
-            fatal(f"node {node} has a wrong chain_id: {res}")
+            mm_print.fatal(f"node {node} has a wrong chain_id: {res}")
 
 
 def add_table_raw(table: Table, *row: object) -> None:

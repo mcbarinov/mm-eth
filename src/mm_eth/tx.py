@@ -6,7 +6,6 @@ import eth_utils
 import rlp
 from eth_account import Account
 from eth_typing import HexStr
-from eth_utils import keccak, to_hex
 from pydantic import BaseModel
 from rlp.sedes import Binary, big_endian_int, binary
 from web3 import Web3
@@ -103,7 +102,7 @@ def sign_legacy_tx(
         tx["data"] = data
 
     signed = Account.sign_transaction(tx, private_key)
-    return SignedTx(tx_hash=to_hex(signed.hash), raw_tx=to_hex(signed.raw_transaction))
+    return SignedTx(tx_hash=eth_utils.to_hex(signed.hash), raw_tx=eth_utils.to_hex(signed.raw_transaction))
 
 
 def sign_tx(
@@ -139,7 +138,7 @@ def sign_tx(
 
 def decode_raw_tx(raw_tx: str) -> DecodedRawTx:
     tx: Any = rlp.decode(eth_utils.to_bytes(hexstr=HexStr(raw_tx)), RPLTransaction)
-    tx_hash = Web3.to_hex(keccak(eth_utils.to_bytes(hexstr=HexStr(raw_tx))))
+    tx_hash = Web3.to_hex(eth_utils.keccak(eth_utils.to_bytes(hexstr=HexStr(raw_tx))))
     from_ = Account.recover_transaction(raw_tx)
     to = Web3.to_checksum_address(tx.to) if tx.to else None
     data = Web3.to_hex(tx.data)

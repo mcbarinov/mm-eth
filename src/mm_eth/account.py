@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
+import eth_utils
 from eth_account import Account
 from eth_account.hdaccount import Mnemonic
 from eth_account.signers.local import LocalAccount
 from eth_account.types import Language
 from eth_keys import KeyAPI
-from eth_utils import decode_hex
-from mm_std import Result
+from mm_result import Result
 
 Account.enable_unaudited_hdwallet_features()
 
@@ -98,7 +98,7 @@ def is_private_key(private_key: str) -> bool:
         bool: True if valid, False otherwise.
     """
     try:
-        key_api.PrivateKey(decode_hex(private_key)).public_key.to_address()
+        key_api.PrivateKey(eth_utils.decode_hex(private_key)).public_key.to_address()
         return True  # noqa: TRY300
     except Exception:
         return False

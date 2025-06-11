@@ -1,13 +1,14 @@
 from decimal import Decimal
 
 import eth_utils
+import mm_print
 import pydash
-from mm_std import PrintFormat, print_json
 from pydantic import BaseModel
 from rich.live import Live
 from rich.table import Table
 
 from mm_eth import rpc, utils
+from mm_eth.cli.cli import PrintFormat
 
 
 class NodeInfo(BaseModel):
@@ -57,7 +58,7 @@ async def run(urls: list[str], proxy: str | None, print_format: PrintFormat) -> 
     live_table.stop()
 
     if print_format == PrintFormat.JSON:
-        print_json(data=result)
+        mm_print.json(data=result)
     # print_json(data=result)
     # table = Table(*["url", "chain_id", "chain_name", "block_number", "base_fee"], title="nodes")
 

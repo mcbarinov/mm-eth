@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any
 
-from mm_std import print_json
+import mm_print
 
 from mm_eth.account import derive_accounts, generate_mnemonic
 
@@ -19,7 +19,7 @@ def run(mnemonic: str, passphrase: str, words: int, derivation_path: str, limit:
         if print_path:
             new_account["path"] = acc.path
         result["accounts"].append(new_account)
-    print_json(result)
+    mm_print.json(result)
 
     if save_file:
         data = [acc["address"] + "\t" + acc["private"] for acc in result["accounts"]]

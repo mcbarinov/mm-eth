@@ -9,7 +9,8 @@ import eth_utils
 import pydash
 import websockets
 from eth_typing import BlockIdentifier
-from mm_std import Result, http_request
+from mm_http import http_request
+from mm_result import Result
 from web3.types import TxReceipt
 
 TIMEOUT = 7.0
@@ -32,17 +33,17 @@ async def rpc_call(
 async def _http_call(node: str, data: dict[str, object], timeout: float, proxy: str | None) -> Result[Any]:
     res = await http_request(node, method="POST", proxy=proxy, timeout=timeout, json=data)
     if res.is_err():
-        return res.to_err()
+        return res.to_result_err()
     try:
         parsed_body = res.parse_json_body()
         err = parsed_body.get("error", {}).get("message", "")
         if err:
-            return res.to_err(f"service_error: {err}")
+            return res.to_result_err(f"service_error: {err}")
         if "result" in parsed_body:
-            return res.to_ok(parsed_body["result"])
-        return res.to_ok("unknown_response")
+            return res.to_result_ok(parsed_body["result"])
+        return res.to_result_err("unknown_response")
     except Exception as e:
-        return res.to_err(e)
+        return res.to_result_err(e)
 
 
 async def _ws_call(node: str, data: dict[str, object], timeout: float) -> Result[Any]:
@@ -225,7 +226,7 @@ async def ens_name(node: str, address: str, timeout: float = TIMEOUT, proxy: str
     extra["name_response"] = name_res.to_dict()
 
     if name_res.is_err():
-        return Result.err(name_res.unwrap_error(), extra)
+        return Result.err(name_res.unwrap_err(), extra)
 
     if name_res.unwrap() == "0x":
         return Result.ok(None, extra)
@@ -248,7 +249,7 @@ async def ens_name(node: str, address: str, timeout: float = TIMEOUT, proxy: str
 async def get_base_fee_per_gas(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
     res = await eth_get_block_by_number(node, "latest", False, timeout=timeout, proxy=proxy)
     if res.is_err():
-        return Result.err(res.unwrap_error(), res.extra)
+        return Result.err(res.unwrap_err(), res.extra)
     if "baseFeePerGas" in res.unwrap():
         return res.with_value(int(res.unwrap()["baseFeePerGas"], 16))
     return Result.err("no_base_fee_per_gas", res.extra)
@@ -257,7 +258,7 @@ async def get_base_fee_per_gas(node: str, timeout: float = TIMEOUT, proxy: str |
 async def get_tx_status(node: str, tx_hash: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
     res = await eth_get_transaction_receipt(node, tx_hash, timeout=timeout, proxy=proxy)
     if res.is_err():
-        return Result.err(res.unwrap_error(), res.extra)
+        return Result.err(res.unwrap_err(), res.extra)
     status = res.unwrap().get("status")
     if status is None:
         return Result.err("no_status", res.extra)

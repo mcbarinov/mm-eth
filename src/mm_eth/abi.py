@@ -72,7 +72,7 @@ def encode_function_input_by_abi(abi: ABI | ABIFunction, fn_name: str, args: lis
     # if abi is contract_abi, get function_abi
     if isinstance(abi, Sequence):
         abi = get_function_abi(abi, fn_name)
-    abi = cast(ABIFunction, abi)
+    # abi = cast(ABIFunction, abi)
 
     # need update all address values to checkSum version
     processed_args = []

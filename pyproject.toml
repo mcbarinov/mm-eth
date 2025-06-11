@@ -1,15 +1,14 @@
 [project]
 name = "mm-eth"
-version = "0.6.2"
+version = "0.7.0"
 description = ""
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
-    "mm-crypto-utils>=0.3.6",
-    "websocket-client~=1.8.0",
-    "aiohttp-socks~=0.10.1",
-    "web3~=7.10.0",
-    "typer>=0.15.2",
-    "mm-std~=0.4.11",
+    # "websocket-client~=1.8.0",
+    "web3~=7.12.0",
+    "typer~=0.16.0",
+    "mm-cryptocurrency>=0.4.7",
+    "mm-std>=0.5.3",
 ]
 [project.scripts]
 mm-eth = "mm_eth.cli.cli:app"
@@ -20,14 +19,14 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = [
-    "pytest~=8.3.5",
-    "pytest-xdist~=3.6.1",
-    "ruff~=0.11.7",
+    "pytest~=8.4.0",
+    "pytest-asyncio~=1.0.0",
+    "pytest-xdist~=3.7.0",
+    "ruff~=0.11.13",
     "pip-audit~=2.9.0",
     "bandit~=1.8.3",
-    "mypy~=1.15.0",
-    "types-pyyaml>=6.0.12.20250402",
-    "pytest-asyncio~=0.26.0",
+    "mypy~=1.16.0",
+    "python-dotenv>=1.1.0",
 ]
 
 [tool.mypy]

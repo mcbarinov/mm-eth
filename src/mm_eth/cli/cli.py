@@ -3,10 +3,11 @@ import importlib.metadata
 from pathlib import Path
 from typing import Annotated
 
+import mm_print
 import typer
-from mm_std import PrintFormat, print_plain
 
 from mm_eth.account import DEFAULT_DERIVATION_PATH
+from mm_eth.cli.cli_utils import PrintFormat
 from mm_eth.cli.cmd import balance_cmd, balances_cmd, deploy_cmd, node_cmd, solc_cmd, transfer_cmd
 from mm_eth.cli.cmd.balances_cmd import BalancesCmdParams
 from mm_eth.cli.cmd.deploy_cmd import DeployCmdParams
@@ -124,7 +125,7 @@ def transfer_command(
 
 def version_callback(value: bool) -> None:
     if value:
-        print_plain(f"mm-eth: {importlib.metadata.version('mm-eth')}")
+        mm_print.plain(f"mm-eth: {importlib.metadata.version('mm-eth')}")
         raise typer.Exit
 
 
