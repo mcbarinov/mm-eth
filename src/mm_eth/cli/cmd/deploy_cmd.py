@@ -2,14 +2,14 @@ from typing import cast
 
 import mm_print
 import tomlkit
-from mm_cryptocurrency import CryptocurrencyConfig
+from mm_web3 import Web3CliConfig
 from pydantic import StrictStr
 
 from mm_eth import account, deploy, retry
 from mm_eth.cli.cli_utils import BaseConfigParams
 
 
-class Config(CryptocurrencyConfig):
+class Config(Web3CliConfig):
     private_key: StrictStr
     nonce: int | None = None
     gas: int

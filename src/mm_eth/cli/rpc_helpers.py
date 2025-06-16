@@ -1,6 +1,6 @@
 import logging
 
-from mm_cryptocurrency import Nodes, Proxies
+from mm_web3 import Nodes, Proxies
 
 from mm_eth import retry
 from mm_eth.cli import calcs

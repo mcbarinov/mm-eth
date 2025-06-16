@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Annotated
 
 import mm_print
-from mm_cryptocurrency import CryptocurrencyConfig
+from mm_web3 import Web3CliConfig
 from pydantic import BeforeValidator
 from rich.live import Live
 from rich.table import Table
@@ -12,7 +12,7 @@ from mm_eth.cli.cli_utils import BaseConfigParams
 from mm_eth.cli.validators import Validators
 
 
-class Config(CryptocurrencyConfig):
+class Config(Web3CliConfig):
     addresses: Annotated[list[str], BeforeValidator(Validators.eth_addresses(unique=True))]
     tokens: Annotated[list[str], BeforeValidator(Validators.eth_addresses(unique=True))]
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]

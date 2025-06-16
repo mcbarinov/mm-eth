@@ -523,27 +523,11 @@ wheels = [
 ]
 
 [[package]]
-name = "mm-cryptocurrency"
-version = "0.4.7"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "loguru" },
-    { name = "mm-http" },
-    { name = "mm-print" },
-    { name = "mm-result" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/f8/29866a414ba131baa183f9f2b520e6705f264ef55a81ef9d3187cc127b66/mm_cryptocurrency-0.4.7.tar.gz", hash = "sha256:45d8a1313f4f1f5d893b54fb57408c94d2300bb72757b827312c701f8df53f3b", size = 81327, upload-time = "2025-06-11T08:35:01.637Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/31/ab/f03ebe598a1f1b150e9b78782efdc0d865e13e5189e729f4edf2d1ebddce/mm_cryptocurrency-0.4.7-py3-none-any.whl", hash = "sha256:2357ad856076e297a729918c067f98f54d3d369d9c395b2a51a8cefc7d72593e", size = 15376, upload-time = "2025-06-11T08:34:59.981Z" },
-]
-
-[[package]]
 name = "mm-eth"
-version = "0.7.0"
+version = "0.7.1"
 source = { editable = "." }
 dependencies = [
-    { name = "mm-cryptocurrency" },
-    { name = "mm-std" },
+    { name = "mm-web3" },
     { name = "typer" },
     { name = "web3" },
 ]
@@ -562,8 +546,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mm-cryptocurrency", specifier = ">=0.4.7" },
-    { name = "mm-std", specifier = ">=0.5.3" },
+    { name = "mm-web3", specifier = "~=0.5.1" },
     { name = "typer", specifier = "~=0.16.0" },
     { name = "web3", specifier = "~=7.12.0" },
 ]
@@ -582,18 +565,18 @@ dev = [
 
 [[package]]
 name = "mm-http"
-version = "0.0.3"
+version = "0.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "aiohttp-socks" },
     { name = "mm-result" },
-    { name = "pydantic" },
     { name = "pydash" },
     { name = "requests", extra = ["socks"] },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/58/da/13e75c1fd5bf19b76076552bd8a403a4a5c0976c1cbb68d124b0c1138d1e/mm_http-0.1.0.tar.gz", hash = "sha256:5afeb49a4d1221413e153ec27fa995c5b0646ea1fc2a4abe67c0cc2ca4e5e44a", size = 47073, upload-time = "2025-06-12T09:00:47.278Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/4c/74c85ecba531cd29fc74a67e7860d9dd5dcf64b4a73695a223d60d614834/mm_http-0.0.3-py3-none-any.whl", hash = "sha256:b17db95110ca54be488632606e2380ddadfccfb95ab6213a13632f7ba0b2de03", size = 4652, upload-time = "2025-06-10T06:24:08.131Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/d7/1ef3e282a823a21d350a25182400393680e58e8add168f815e76ac4386d0/mm_http-0.1.0-py3-none-any.whl", hash = "sha256:3cedc4d8e5e4e6013405fa96a91378c2d66e28f3f389e2ddb127b02061a0c24e", size = 4331, upload-time = "2025-06-12T09:00:43.097Z" },
 ]
 
 [[package]]
@@ -611,10 +594,11 @@ wheels = [
 
 [[package]]
 name = "mm-result"
-version = "0.0.4"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/48/03/82a800b72e611aab08e3bed14dfb59b7b26c3438e1bd7e6a747727f64831/mm_result-0.1.1.tar.gz", hash = "sha256:b00f75f5f4d03a47db99394847b462cb013c3eb111d60aa31e39c5405d5eceb6", size = 31041, upload-time = "2025-06-12T08:56:55.271Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/6b/b287f7d618080ddbe6bbc8091da47ee316c581a3baa22555e108affd7d71/mm_result-0.0.4-py3-none-any.whl", hash = "sha256:edb12be3bd49eca224335067b110fb5a1901d68d52c2a371cdda32d5274a06b7", size = 4907, upload-time = "2025-06-09T15:32:07.204Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/07/8b51ebac3c01536b98cc5a7a35dc3e71ab0deadee95f4bf13d1a23eddbc2/mm_result-0.1.1-py3-none-any.whl", hash = "sha256:d4b45025a08f2f50658aaf2756adfd55c91b0e8ef69a922bfaecd411234e6498", size = 4832, upload-time = "2025-06-12T08:56:53.447Z" },
 ]
 
 [[package]]
@@ -624,6 +608,22 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/8a/1b/7991ecaf40417757fb8e383ed9cc600c0b3ac731f5c6f9132bd596448213/mm_std-0.5.3.tar.gz", hash = "sha256:e23d548706f32534450f2310d1259f5d84d54e7cc4f33920ad2dba86e8c2f7c6", size = 27823, upload-time = "2025-06-11T06:15:39.037Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/56/22/57aa730c90899e5eff6de212c64d2bcf7d8526f3f2fb2d815718db332f36/mm_std-0.5.3-py3-none-any.whl", hash = "sha256:84f25e3a3dc4b10cab30c63be18ca195928a4cabda01b3cee9a27ba5520b2b92", size = 7532, upload-time = "2025-06-11T06:15:37.551Z" },
+]
+
+[[package]]
+name = "mm-web3"
+version = "0.5.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "loguru" },
+    { name = "mm-http" },
+    { name = "mm-print" },
+    { name = "mm-std" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9f/60/75f9b37a8df1fc13b58e996ad1415d5d0248c0082679c3c9d9206b7c2d2d/mm_web3-0.5.1.tar.gz", hash = "sha256:4a3624359ed775027da4fc7c828a478968fb863f5127cc0d1b5bf2b78ffe75a8", size = 81523, upload-time = "2025-06-16T07:58:26.815Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cb/16/476324d3bf5df27ad0e3731b2b521f46ca4aec5d66c71f1c47b8d708a29c/mm_web3-0.5.1-py3-none-any.whl", hash = "sha256:c28572a70285e2ed1be4167f2ea094b8e88acce52de2b62ffbe60bf033488110", size = 15058, upload-time = "2025-06-16T07:58:25.701Z" },
 ]
 
 [[package]]

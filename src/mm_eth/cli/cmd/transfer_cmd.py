@@ -5,9 +5,8 @@ from pathlib import Path
 from typing import Annotated, Literal, Self, cast
 
 from loguru import logger
-from mm_cryptocurrency import CryptocurrencyConfig, PrivateKeyMap, Transfer, calc_decimal_expression
-from mm_cryptocurrency.log import init_loguru
 from mm_std import utc_now
+from mm_web3 import PrivateKeyMap, Transfer, Web3CliConfig, calc_decimal_expression, init_loguru
 from pydantic import AfterValidator, BeforeValidator, Field, model_validator
 from rich.console import Console
 from rich.live import Live
@@ -20,7 +19,7 @@ from mm_eth.cli.validators import Validators
 from mm_eth.converters import from_wei
 
 
-class Config(CryptocurrencyConfig):
+class Config(Web3CliConfig):
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
     chain_id: int
     transfers: Annotated[list[Transfer], BeforeValidator(Validators.eth_transfers())]

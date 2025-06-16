@@ -1,11 +1,11 @@
 import json
 import os
 
-import mm_cryptocurrency
+import mm_web3
 import pytest
 from dotenv import load_dotenv
 from eth_typing import ABI
-from mm_cryptocurrency import fetch_proxies_sync
+from mm_web3 import fetch_proxies_sync
 from typer.testing import CliRunner
 
 from mm_eth.anvil import Anvil
@@ -101,7 +101,7 @@ def proxies() -> list[str]:
 
 @pytest.fixture()
 def random_proxy(proxies: list[str]) -> str:
-    res = mm_cryptocurrency.random_proxy(proxies)
+    res = mm_web3.random_proxy(proxies)
     if not res:
         raise RuntimeError("No proxies available")
     return res

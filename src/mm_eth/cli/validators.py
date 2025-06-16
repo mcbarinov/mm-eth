@@ -1,7 +1,7 @@
 from collections.abc import Callable
 
 import eth_utils
-from mm_cryptocurrency import ConfigValidators, PrivateKeyMap, Transfer
+from mm_web3 import ConfigValidators, PrivateKeyMap, Transfer
 
 from mm_eth import account
 
