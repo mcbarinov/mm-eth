@@ -96,7 +96,10 @@ def erc20_token_bin() -> str:
 
 @pytest.fixture(scope="session")
 def proxies() -> list[str]:
-    return fetch_proxies_sync(os.getenv("PROXIES_URL")).unwrap()
+    proxies_url = os.getenv("PROXIES_URL")
+    if not proxies_url:
+        raise RuntimeError("PROXIES_URL environment variable is not set")
+    return fetch_proxies_sync(proxies_url).unwrap()
 
 
 @pytest.fixture()

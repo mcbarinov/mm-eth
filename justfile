@@ -15,8 +15,8 @@ format:
 test:
     uv run pytest -n auto tests
 
-lint: format
-    uv run ruff check src tests
+lint *args: format pre-commit
+    uv run ruff check {{args}} src tests
     uv run mypy src
 
 audit:
@@ -36,3 +36,9 @@ sync:
 
 anvil:
     anvil -m "$MNEMONIC"
+
+pre-commit:
+    uv run pre-commit run --all-files
+
+pre-commit-autoupdate:
+    uv run pre-commit autoupdate
