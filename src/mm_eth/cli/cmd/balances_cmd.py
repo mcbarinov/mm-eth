@@ -105,12 +105,12 @@ async def _get_tokens_info(config: Config) -> list[Token]:
     for address in config.tokens:
         decimals_res = await retry.erc20_decimals(5, config.nodes, None, token=address)
         if decimals_res.is_err():
-            mm_print.fatal(f"can't get token {address} decimals: {decimals_res.unwrap_err()}")
+            mm_print.exit_with_error(f"can't get token {address} decimals: {decimals_res.unwrap_err()}")
         decimal = decimals_res.unwrap()
 
         symbols_res = await retry.erc20_symbol(5, config.nodes, None, token=address)
         if symbols_res.is_err():
-            mm_print.fatal(f"can't get token {address} symbol: {symbols_res.unwrap_err()}")
+            mm_print.exit_with_error(f"can't get token {address} symbol: {symbols_res.unwrap_err()}")
         symbol = symbols_res.unwrap()
 
         result.append(Token(address=address, decimals=decimal, symbol=symbol))

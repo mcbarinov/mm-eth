@@ -35,7 +35,7 @@ async def _http_call(node: str, data: dict[str, object], timeout: float, proxy: 
     if res.is_err():
         return res.to_result_err()
     try:
-        parsed_body = res.parse_json_body()
+        parsed_body = res.parse_json()
         err = parsed_body.get("error", {}).get("message", "")
         if err:
             return res.to_result_err(f"service_error: {err}")

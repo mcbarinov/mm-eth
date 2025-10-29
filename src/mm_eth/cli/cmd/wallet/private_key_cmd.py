@@ -8,4 +8,4 @@ def run(private_key: str) -> None:
     if res.is_ok():
         mm_print.plain(res.unwrap())
     else:
-        mm_print.fatal(f"invalid private key: '{private_key}'")
+        mm_print.exit_with_error(f"invalid private key: '{private_key}'")

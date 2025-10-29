@@ -11,7 +11,7 @@ def run(contract_path: Path, tmp_dir: Path, print_format: PrintFormat) -> None:
     contract_name = contract_path.stem
     res = solc(contract_name, contract_path, tmp_dir)
     if res.is_err():
-        mm_print.fatal(res.unwrap_err())
+        mm_print.exit_with_error(res.unwrap_err())
 
     bin_ = res.unwrap().bin
     abi = res.unwrap().abi

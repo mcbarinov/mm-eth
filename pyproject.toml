@@ -4,9 +4,9 @@ version = "0.7.2"
 description = ""
 requires-python = ">=3.13"
 dependencies = [
-    "mm-web3~=0.5.2",
-    "web3~=7.13.0",
-    "typer~=0.16.1",
+    "mm-web3~=0.5.4",
+    "web3~=7.14.0",
+    "typer~=0.20.0",
 ]
 [project.scripts]
 mm-eth = "mm_eth.cli.cli:app"
@@ -15,17 +15,17 @@ mm-eth = "mm_eth.cli.cli:app"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv]
-dev-dependencies = [
-    "pytest~=8.4.1",
-    "pytest-asyncio~=1.1.0",
+[dependency-groups]
+dev = [
+    "pytest~=8.4.2",
+    "pytest-asyncio~=1.2.0",
     "pytest-xdist~=3.8.0",
-    "ruff~=0.12.10",
+    "ruff~=0.14.2",
     "pip-audit~=2.9.0",
     "bandit~=1.8.6",
-    "mypy~=1.17.1",
+    "mypy~=1.18.2",
     "pre-commit~=4.3.0",
-    "python-dotenv~=1.1.1",
+    "python-dotenv~=1.2.1",
 ]
 
 [tool.mypy]

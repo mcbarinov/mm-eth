@@ -46,7 +46,7 @@ async def check_nodes_for_chain_id(nodes: list[str], chain_id: int) -> None:
     for node in nodes:
         res = (await rpc.eth_chain_id(node)).unwrap("can't get chain_id")
         if res != chain_id:
-            mm_print.fatal(f"node {node} has a wrong chain_id: {res}")
+            mm_print.exit_with_error(f"node {node} has a wrong chain_id: {res}")
 
 
 def add_table_raw(table: Table, *row: object) -> None:
