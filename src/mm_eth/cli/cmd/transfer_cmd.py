@@ -43,8 +43,8 @@ class Config(Web3CliConfig):
     def from_addresses(self) -> list[str]:
         return [r.from_address for r in self.transfers]
 
-    @model_validator(mode="after")  # type:ignore[misc]
-    async def final_validator(self) -> Self:
+    @model_validator(mode="after")
+    def final_validator(self) -> Self:
         if not self.private_keys.contains_all_addresses(self.from_addresses):
             raise ValueError("private keys are not set for all addresses")
 
@@ -66,12 +66,13 @@ class Config(Web3CliConfig):
             if self.value_min_limit:
                 Validators.valid_eth_expression()(self.value_min_limit)
 
+        return self
+
+    async def async_init(self) -> None:
         if self.token:
             self.token_decimals = (await retry.erc20_decimals(5, self.nodes, self.proxies, token=self.token)).unwrap(
                 "can't get token decimals"
             )
-
-        return self
 
 
 class TransferCmdParams(BaseConfigParams):
@@ -84,6 +85,7 @@ class TransferCmdParams(BaseConfigParams):
 
 async def run(params: TransferCmdParams) -> None:
     config = await Config.read_toml_config_or_exit_async(params.config_path)
+    await config.async_init()
     if params.print_config:
         config.print_and_exit(exclude={"private_keys"})
 
