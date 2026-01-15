@@ -32,7 +32,7 @@ def solc(contract_name: str, contract_path: Path, tmp_dir: Path) -> Result[SolcR
         work_dir_created = True
 
         cmd = f"solc -o '{work_dir}' --abi --bin --optimize '{contract_path}'"
-        result = mm_std.shell(cmd)
+        result = mm_std.run_cmd(cmd)
         if result.code != 0:
             return Result.err(f"solc error: {result.stderr}")
 

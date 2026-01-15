@@ -1,13 +1,9 @@
 [project]
 name = "mm-eth"
-version = "0.7.3"
+version = "0.7.4"
 description = ""
 requires-python = ">=3.13"
-dependencies = [
-    "mm-web3~=0.5.4",
-    "web3~=7.14.0",
-    "typer~=0.20.0",
-]
+dependencies = ["mm-web3~=0.5.6", "web3~=7.14.0", "typer~=0.21.1"]
 [project.scripts]
 mm-eth = "mm_eth.cli.cli:app"
 
@@ -17,15 +13,15 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pytest~=8.4.2",
-    "pytest-asyncio~=1.2.0",
+    "bandit~=1.9.2",
+    "mypy~=1.19.1",
+    "pip-audit~=2.10.0",
+    "pre-commit~=4.5.1",
+    "pytest~=9.0.2",
+    "pytest-asyncio~=1.3.0",
     "pytest-xdist~=3.8.0",
-    "ruff~=0.14.2",
-    "pip-audit~=2.9.0",
-    "bandit~=1.8.6",
-    "mypy~=1.18.2",
-    "pre-commit~=4.3.0",
-    "python-dotenv~=1.2.1",
+    "ruff~=0.14.11",
+    "python-dotenv~=1.2.0",
 ]
 
 [tool.mypy]
@@ -47,27 +43,27 @@ target-version = "py313"
 select = ["ALL"]
 # fixable = ["F401"]
 ignore = [
-    "TC", # flake8-type-checking, TYPE_CHECKING is dangerous, for example it doesn't work with pydantic
-    "A005", # flake8-builtins: stdlib-module-shadowing
-    "ERA001", # eradicate: commented-out-code
-    "PT", # flake8-pytest-style
-    "D", # pydocstyle
-    "FIX", # flake8-fixme
-    "PLR0911", # pylint: too-many-return-statements
-    "PLR0912", # pylint: too-many-branches
-    "PLR0913", # pylint: too-many-arguments
-    "PLR2004", # pylint: magic-value-comparison
-    "PLC0414", # pylint: useless-import-alias
-    "FBT", # flake8-boolean-trap
-    "EM", # flake8-errmsg
-    "TRY003", # tryceratops: raise-vanilla-args
-    "C901", # mccabe: complex-structure,
-    "BLE001", # flake8-blind-except
-    "S311", # bandit: suspicious-non-cryptographic-random-usage
-    "TD002", # flake8-todos: missing-todo-author
-    "TD003", # flake8-todos: missing-todo-link
-    "RET503", # flake8-return: implicit-return
-    "COM812", # it's used in ruff formatter
+    "TC",       # flake8-type-checking, TYPE_CHECKING is dangerous, for example it doesn't work with pydantic
+    "A005",     # flake8-builtins: stdlib-module-shadowing
+    "ERA001",   # eradicate: commented-out-code
+    "PT",       # flake8-pytest-style
+    "D",        # pydocstyle
+    "FIX",      # flake8-fixme
+    "PLR0911",  # pylint: too-many-return-statements
+    "PLR0912",  # pylint: too-many-branches
+    "PLR0913",  # pylint: too-many-arguments
+    "PLR2004",  # pylint: magic-value-comparison
+    "PLC0414",  # pylint: useless-import-alias
+    "FBT",      # flake8-boolean-trap
+    "EM",       # flake8-errmsg
+    "TRY003",   # tryceratops: raise-vanilla-args
+    "C901",     # mccabe: complex-structure,
+    "BLE001",   # flake8-blind-except
+    "S311",     # bandit: suspicious-non-cryptographic-random-usage
+    "TD002",    # flake8-todos: missing-todo-author
+    "TD003",    # flake8-todos: missing-todo-link
+    "RET503",   # flake8-return: implicit-return
+    "COM812",   # it's used in ruff formatter
     "ASYNC109", # flake8-async: async-function-with-timeout
     "G004",
 ]
