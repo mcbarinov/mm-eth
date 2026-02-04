@@ -1,63 +1,77 @@
+"""Tests for RPC client functions."""
+
 from mm_eth import rpc, tx
 
 
 async def test_eth_block_number(mainnet, random_proxy):
+    """Test fetching the latest block number."""
     res = await rpc.eth_block_number(mainnet, proxy=random_proxy)
     assert res.unwrap() > 9_000_000
 
 
 async def test_eth_get_block_by_number_with_wss(mainnet_ws):
+    """Test fetching block number over WebSocket."""
     res = await rpc.eth_block_number(mainnet_ws)
     assert res.unwrap() > 9_000_000
 
 
 async def test_eth_chain_id(mainnet, random_proxy):
+    """Test fetching the chain ID."""
     res = await rpc.eth_chain_id(mainnet, proxy=random_proxy)
     assert res.unwrap() == 1
 
 
 async def test_eth_get_balance(mainnet, address_bnb, random_proxy):
+    """Test fetching ETH balance."""
     res = await rpc.eth_get_balance(mainnet, address_bnb, proxy=random_proxy)
     assert res.unwrap() > 1
 
 
 async def test_eth_get_block_by_number(mainnet, random_proxy):
+    """Test fetching a block by number with transactions."""
     res = await rpc.eth_get_block_by_number(mainnet, 8972973, True, proxy=random_proxy)
     assert res.unwrap()["transactions"][0]["hash"] == "0x1bc1f41a0999c4ff4afe8f17704400ba0328b8b8bf60681fb809969c2127054a"
 
 
 async def test_eth_get_transaction_count(mainnet, address_binance, random_proxy):
+    """Test fetching transaction count (nonce)."""
     res = await rpc.eth_get_transaction_count(mainnet, address_binance, proxy=random_proxy)
     assert res.unwrap() > 1000
 
 
 async def test_eth_send_raw_transaction(mainnet, private_0, address_1):
+    """Test sending a raw transaction (expected to fail with insufficient funds)."""
     raw_tx = tx.sign_legacy_tx(nonce=0, gas_price=111, gas=21000, private_key=private_0, chain_id=1, value=222, to=address_1)
     res = await rpc.eth_send_raw_transaction(mainnet, raw_tx.raw_tx)
-    assert res.unwrap_err().startswith("service_error: insufficient funds for")
+    assert res.unwrap_err().startswith("service_error: Insufficient funds for")
 
 
 async def test_erc20_balance(mainnet, address_tether, address_bnb, random_proxy):
+    """Test fetching ERC20 token balance."""
     res = await rpc.erc20_balance(mainnet, token=address_tether, wallet=address_bnb, proxy=random_proxy)
     assert res.unwrap() > 1_000_000
 
 
 async def test_erc20_name(mainnet, address_tether, random_proxy):
+    """Test fetching ERC20 token name."""
     res = await rpc.erc20_name(mainnet, address_tether, proxy=random_proxy)
     assert res.unwrap() == "Tether USD"
 
 
 async def test_erc20_symbol(mainnet, address_tether, random_proxy):
+    """Test fetching ERC20 token symbol."""
     res = await rpc.erc20_symbol(mainnet, address_tether, proxy=random_proxy)
     assert res.unwrap() == "USDT"
 
 
 async def test_erc20_decimals(mainnet, address_tether, random_proxy):
+    """Test fetching ERC20 token decimals."""
     res = await rpc.erc20_decimals(mainnet, address_tether, proxy=random_proxy)
     assert res.unwrap() == 6
 
 
 async def test_ens_name(mainnet, random_proxy):
+    """Test resolving ENS reverse lookup."""
     # exists
     address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
     assert (await rpc.ens_name(mainnet, address, proxy=random_proxy)).unwrap() == "vitalik.eth"

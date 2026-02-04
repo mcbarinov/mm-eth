@@ -1,10 +1,12 @@
+"""Main CLI application and command definitions."""
+
 import asyncio
 import importlib.metadata
 from pathlib import Path
 from typing import Annotated
 
-import mm_print
 import typer
+from mm_print import print_plain
 
 from mm_eth.account import DEFAULT_DERIVATION_PATH
 from mm_eth.cli.cli_utils import PrintFormat
@@ -31,6 +33,7 @@ def mnemonic_command(  # nosec
     limit: int = typer.Option(10, "--limit", "-l"),
     save_file: str = typer.Option("", "--save", "-s", help="Save private keys to a file"),
 ) -> None:
+    """Generate or derive ETH accounts from a mnemonic phrase."""
     mnemonic_cmd.run(
         mnemonic,
         passphrase=passphrase,
@@ -44,6 +47,7 @@ def mnemonic_command(  # nosec
 
 @wallet_app.command(name="private-key", help="Print an address for a private key")
 def private_key_command(private_key: str) -> None:
+    """Print the address for a given private key."""
     private_key_cmd.run(private_key)
 
 
@@ -53,6 +57,7 @@ def node_command(
     proxy: Annotated[str | None, typer.Option("--proxy", "-p", help="Proxy")] = None,
     print_format: Annotated[PrintFormat, typer.Option("--format", "-f", help="Print format")] = PrintFormat.TABLE,
 ) -> None:
+    """Check RPC node URLs and display chain info."""
     asyncio.run(node_cmd.run(urls, proxy, print_format))
 
 
@@ -64,6 +69,7 @@ def balance_command(
     wei: bool = typer.Option(False, "--wei", "-w", help="Print balances in wei units"),
     print_format: Annotated[PrintFormat, typer.Option("--format", "-f", help="Print format")] = PrintFormat.PLAIN,
 ) -> None:
+    """Print ETH and optional ERC-20 token balance for an address."""
     asyncio.run(balance_cmd.run(rpc_url, wallet_address, token_address, wei, print_format))
 
 
@@ -74,6 +80,7 @@ def balances_command(
     nonce: bool = typer.Option(False, "--nonce", "-n", help="Print nonce also"),
     wei: bool = typer.Option(False, "--wei", "-w", help="Show balances in WEI"),
 ) -> None:
+    """Print base and ERC-20 token balances for multiple addresses."""
     asyncio.run(
         balances_cmd.run(BalancesCmdParams(config_path=config_path, print_config=print_config, wei=wei, show_nonce=nonce))
     )
@@ -85,6 +92,7 @@ def solc_command(
     tmp_dir: Path = Path("/tmp"),  # noqa: S108 # nosec
     print_format: Annotated[PrintFormat, typer.Option("--format", "-f", help="Print format")] = PrintFormat.PLAIN,
 ) -> None:
+    """Compile a Solidity file and print the ABI and bytecode."""
     solc_cmd.run(contract_path, tmp_dir, print_format)
 
 
@@ -93,6 +101,7 @@ def deploy_command(
     config_path: Path,
     print_config: bool = typer.Option(False, "--config", "-c", help="Print config and exit"),
 ) -> None:
+    """Deploy a smart contract onchain from a config file."""
     asyncio.run(deploy_cmd.run(DeployCmdParams(config_path=config_path, print_config=print_config)))
 
 
@@ -108,6 +117,7 @@ def transfer_command(
     skip_receipt: bool = typer.Option(False, "--skip-receipt", help="Don't wait for a tx receipt"),
     debug: bool = typer.Option(False, "--debug", "-d", help="Print debug info"),
 ) -> None:
+    """Transfer ETH or ERC-20 tokens based on a config file."""
     asyncio.run(
         transfer_cmd.run(
             TransferCmdParams(
@@ -124,14 +134,15 @@ def transfer_command(
 
 
 def version_callback(value: bool) -> None:
+    """Print the version and exit when --version is passed."""
     if value:
-        mm_print.plain(f"mm-eth: {importlib.metadata.version('mm-eth')}")
+        print_plain(f"mm-eth: {importlib.metadata.version('mm-eth')}")
         raise typer.Exit
 
 
 @app.callback()
 def main(_version: bool = typer.Option(None, "--version", callback=version_callback, is_eager=True)) -> None:
-    pass
+    """CLI entry point for mm-eth."""
 
 
 if __name__ == "__main_":

@@ -1,4 +1,8 @@
+"""Ethereum network utility helpers."""
+
+
 def name_network(chain_id: int) -> str:
+    """Return the human-readable network name for a given chain ID."""
     match chain_id:
         case 1:
             return "Ethereum Mainnet"

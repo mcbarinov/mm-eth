@@ -1,18 +1,21 @@
+"""CLI command: print balances for multiple addresses and tokens."""
+
 from dataclasses import dataclass
 from typing import Annotated
 
-import mm_print
 from mm_web3 import Web3CliConfig
 from pydantic import BeforeValidator
 from rich.live import Live
 from rich.table import Table
 
 from mm_eth import converters, retry
-from mm_eth.cli.cli_utils import BaseConfigParams
+from mm_eth.cli.cli_utils import BaseConfigParams, fatal
 from mm_eth.cli.validators import Validators
 
 
 class Config(Web3CliConfig):
+    """Configuration for the balances command."""
+
     addresses: Annotated[list[str], BeforeValidator(Validators.eth_addresses(unique=True))]
     tokens: Annotated[list[str], BeforeValidator(Validators.eth_addresses(unique=True))]
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
@@ -21,17 +24,22 @@ class Config(Web3CliConfig):
 
 @dataclass
 class Token:
+    """Resolved ERC-20 token metadata."""
+
     address: str
     decimals: int
     symbol: str
 
 
 class BalancesCmdParams(BaseConfigParams):
+    """Parameters for the balances command."""
+
     wei: bool
     show_nonce: bool
 
 
 async def run(params: BalancesCmdParams) -> None:
+    """Read config, fetch balances for all addresses/tokens, and display a table."""
     config = Config.read_toml_config_or_exit(params.config_path)
     if params.print_config:
         config.print_and_exit()
@@ -101,16 +109,17 @@ async def run(params: BalancesCmdParams) -> None:
 
 
 async def _get_tokens_info(config: Config) -> list[Token]:
+    """Fetch decimals and symbol for each configured token address."""
     result: list[Token] = []
     for address in config.tokens:
         decimals_res = await retry.erc20_decimals(5, config.nodes, None, token=address)
         if decimals_res.is_err():
-            mm_print.exit_with_error(f"can't get token {address} decimals: {decimals_res.unwrap_err()}")
+            fatal(f"can't get token {address} decimals: {decimals_res.unwrap_err()}")
         decimal = decimals_res.unwrap()
 
         symbols_res = await retry.erc20_symbol(5, config.nodes, None, token=address)
         if symbols_res.is_err():
-            mm_print.exit_with_error(f"can't get token {address} symbol: {symbols_res.unwrap_err()}")
+            fatal(f"can't get token {address} symbol: {symbols_res.unwrap_err()}")
         symbol = symbols_res.unwrap()
 
         result.append(Token(address=address, decimals=decimal, symbol=symbol))

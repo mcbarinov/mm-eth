@@ -1,3 +1,5 @@
+"""Wei/ether/gwei/token unit conversion utilities."""
+
 from decimal import Decimal, localcontext
 from typing import cast
 
@@ -6,6 +8,7 @@ from web3.types import Wei
 
 
 def to_wei(value: str | int | Decimal, decimals: int | None = None) -> Wei:
+    """Convert a value with optional unit suffix (gwei, ether, eth, t) to wei."""
     if isinstance(value, int):
         return Wei(value)
     if isinstance(value, Decimal):
@@ -36,6 +39,7 @@ def to_wei(value: str | int | Decimal, decimals: int | None = None) -> Wei:
 
 
 def from_wei(value: int, unit: str, round_ndigits: int | None = None, decimals: int | None = None) -> Decimal:
+    """Convert a wei value to the specified unit (eth, gwei, t) with optional rounding."""
     if value == 0:
         return Decimal(0)
 

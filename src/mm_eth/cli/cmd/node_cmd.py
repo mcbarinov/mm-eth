@@ -1,8 +1,10 @@
+"""CLI command: check RPC node status."""
+
 from decimal import Decimal
 
 import eth_utils
-import mm_print
 import pydash
+from mm_print import print_json
 from pydantic import BaseModel
 from rich.live import Live
 from rich.table import Table
@@ -12,6 +14,8 @@ from mm_eth.cli.cli import PrintFormat
 
 
 class NodeInfo(BaseModel):
+    """RPC node status information."""
+
     url: str
     chain_id: int | str
     chain_name: str
@@ -19,11 +23,15 @@ class NodeInfo(BaseModel):
     base_fee: str | int | Decimal
 
     def table_row(self) -> list[object]:
+        """Return the node info fields as a list for table rendering."""
         return [self.url, self.chain_id, self.chain_name, self.block_number, self.base_fee]
 
 
 class LiveTable:
+    """Wrapper around Rich's Live table for incremental row display."""
+
     def __init__(self, table: Table, ignore: bool = False) -> None:
+        """Initialize the live table, optionally disabling live output."""
         self.ignore = ignore
         if ignore:
             return
@@ -32,18 +40,21 @@ class LiveTable:
         self.live.start()
 
     def add_row(self, *args: object) -> None:
+        """Add a row to the table and refresh the live display."""
         if self.ignore:
             return
         self.table.add_row(*(str(a) for a in args))
         self.live.refresh()
 
     def stop(self) -> None:
+        """Stop the live display."""
         if self.ignore:
             return
         self.live.stop()
 
 
 async def run(urls: list[str], proxy: str | None, print_format: PrintFormat) -> None:
+    """Query each RPC URL and display chain ID, block number, and base fee."""
     urls = pydash.uniq(urls)
     result = []
     live_table = LiveTable(
@@ -58,7 +69,7 @@ async def run(urls: list[str], proxy: str | None, print_format: PrintFormat) -> 
     live_table.stop()
 
     if print_format == PrintFormat.JSON:
-        mm_print.json(data=result)
+        print_json(data=result)
     # print_json(data=result)
     # table = Table(*["url", "chain_id", "chain_name", "block_number", "base_fee"], title="nodes")
 
@@ -68,6 +79,7 @@ async def run(urls: list[str], proxy: str | None, print_format: PrintFormat) -> 
 
 
 async def _get_node_info(url: str, proxy: str | None) -> NodeInfo:
+    """Fetch chain ID, block number, and base fee from a single RPC node."""
     chain_id_res = await rpc.eth_chain_id(url, proxy=proxy)
     chain_id = chain_id_res.value_or_error()
     chain_name = ""

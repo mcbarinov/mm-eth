@@ -1,0 +1,1 @@
+"""Wallet-related CLI commands."""

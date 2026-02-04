@@ -1,14 +1,18 @@
+"""Tests for account utilities."""
+
 from mm_eth import account
 from mm_eth.account import DEFAULT_DERIVATION_PATH
 
 
 def test_generate_mnemonic():
+    """Test mnemonic generation with different word counts."""
     assert len(account.generate_mnemonic().split()) == 24
     assert len(account.generate_mnemonic(12).split()) == 12
     assert account.generate_mnemonic() != account.generate_mnemonic()
 
 
 def test_derive_accounts():
+    """Test HD wallet account derivation from mnemonic."""
     mnemonic = "tuition skin amateur sail oak bone panel concert horse need panel balance"
     passphrase = "pass-secret"
     res = account.derive_accounts(mnemonic, passphrase, DEFAULT_DERIVATION_PATH, 7)
@@ -20,6 +24,7 @@ def test_derive_accounts():
 
 
 def test_private_to_address():
+    """Test converting a private key to an address."""
     private = "0xbc2a0bb29ed04fd94cb413a4483e56187e6faf13c2f6f4ab4ec0fa5bef8fd128"
     address = "0x46246a9e6B931EE2C60a525455c01689bA8eb2Ae"
     assert account.private_to_address(private).unwrap() == address
@@ -28,6 +33,7 @@ def test_private_to_address():
 
 
 def test_is_private_key():
+    """Test private key format validation."""
     assert account.is_private_key("0xd17e3e15fd28dea2825073d08ab8b7320555759e5639d889d7b4b314c49743a0")
     assert account.is_private_key("d17e3e15fd28dea2825073d08ab8b7320555759e5639d889d7b4b314c49743a0")
     assert not account.is_private_key("17e3e15fd28dea2825073d08ab8b7320555759e5639d889d7b4b314c49743a0")

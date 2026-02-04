@@ -1,3 +1,5 @@
+"""Tests for the solc CLI command."""
+
 import json
 from pathlib import Path
 
@@ -5,6 +7,7 @@ from mm_eth.cli.cli import app
 
 
 def test_solc_cmd(cli_runner):
+    """Test solc command compiles a Solidity contract."""
     current_dir = Path(__file__).resolve().parent
     contract_path = current_dir / "../../contracts/ERC20.sol"
     res = cli_runner.invoke(app, f"solc {contract_path} -f json")

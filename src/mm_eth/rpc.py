@@ -1,3 +1,5 @@
+"""Low-level async Ethereum JSON-RPC client supporting HTTP and WebSocket."""
+
 import asyncio
 import json
 import string
@@ -24,6 +26,7 @@ async def rpc_call(
     proxy: str | None,
     id_: int = 1,
 ) -> Result[Any]:
+    """Send a JSON-RPC request to the node via HTTP or WebSocket."""
     data = {"jsonrpc": "2.0", "method": method, "params": params, "id": id_}
     if node.startswith("http"):
         return await _http_call(node, data, timeout, proxy)
@@ -31,11 +34,12 @@ async def rpc_call(
 
 
 async def _http_call(node: str, data: dict[str, object], timeout: float, proxy: str | None) -> Result[Any]:
+    """Send a JSON-RPC request over HTTP POST."""
     res = await http_request(node, method="POST", proxy=proxy, timeout=timeout, json=data)
     if res.is_err():
         return res.to_result_err()
     try:
-        parsed_body = res.parse_json()
+        parsed_body = res.json_body().unwrap("invalid json response")
         err = parsed_body.get("error", {}).get("message", "")
         if err:
             return res.to_result_err(f"service_error: {err}")
@@ -47,6 +51,7 @@ async def _http_call(node: str, data: dict[str, object], timeout: float, proxy: 
 
 
 async def _ws_call(node: str, data: dict[str, object], timeout: float) -> Result[Any]:
+    """Send a JSON-RPC request over WebSocket."""
     try:
         async with asyncio.timeout(timeout):
             async with websockets.connect(node) as ws:
@@ -69,25 +74,30 @@ async def _ws_call(node: str, data: dict[str, object], timeout: float) -> Result
 
 
 async def eth_block_number(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    """Return the current block number."""
     return (await rpc_call(node, "eth_blockNumber", [], timeout, proxy)).map(_hex_str_to_int)
 
 
 async def eth_get_balance(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    """Return the ETH balance (in wei) of the given address."""
     return (await rpc_call(node, "eth_getBalance", [address, "latest"], timeout, proxy)).map(_hex_str_to_int)
 
 
 async def eth_chain_id(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    """Return the chain ID of the connected network."""
     return (await rpc_call(node, "eth_chainId", [], timeout, proxy)).map(_hex_str_to_int)
 
 
 async def eth_get_block_by_number(
     node: str, block_number: BlockIdentifier, full_transaction: bool = False, timeout: float = TIMEOUT, proxy: str | None = None
 ) -> Result[dict[str, Any]]:
+    """Return block data for the given block number or tag."""
     params = [hex(block_number) if isinstance(block_number, int) else block_number, full_transaction]
     return await rpc_call(node, "eth_getBlockByNumber", params, timeout, proxy)
 
 
 async def eth_get_transaction_count(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    """Return the nonce (transaction count) for the given address."""
     return (await rpc_call(node, "eth_getTransactionCount", [address, "latest"], timeout, proxy)).map(_hex_str_to_int)
 
 
@@ -101,6 +111,7 @@ async def eth_estimate_gas(
     timeout: float = TIMEOUT,
     proxy: str | None = None,
 ) -> Result[int]:
+    """Estimate the gas required for a transaction."""
     params: dict[str, Any] = {"from": from_}
     if to:
         params["to"] = to
@@ -114,12 +125,15 @@ async def eth_estimate_gas(
 
 
 async def eth_send_raw_transaction(node: str, raw_tx: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str]:
+    """Broadcast a signed raw transaction and return its hash."""
     return await rpc_call(node, "eth_sendRawTransaction", [raw_tx], timeout, proxy)
 
 
 async def eth_get_transaction_receipt(
     node: str, tx_hash: str, timeout: float = TIMEOUT, proxy: str | None = None
 ) -> Result[TxReceipt]:
+    """Fetch the transaction receipt, converting hex string fields to integers."""
+
     def convert_hex_str_ints(receipt: dict[str, Any]) -> TxReceipt:
         int_fields = {
             "blockNumber",
@@ -145,12 +159,12 @@ async def eth_get_transaction_receipt(
         return res
 
     if res.unwrap() is None:
-        return Result.err("no_receipt", res.extra)
+        return Result.err("no_receipt", res.context)
 
     try:
-        return Result.ok(convert_hex_str_ints(res.unwrap()), res.extra)
+        return Result.ok(convert_hex_str_ints(res.unwrap()), res.context)
     except Exception as e:
-        return Result.err(e, res.extra)
+        return Result.err(e, res.context)
 
 
 # -- end eth rpc calls --
@@ -159,22 +173,26 @@ async def eth_get_transaction_receipt(
 
 
 async def erc20_balance(node: str, token: str, wallet: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    """Return the ERC-20 token balance for a wallet address."""
     data = "0x70a08231000000000000000000000000" + wallet[2:]
     params = [{"to": token, "data": data}, "latest"]
     return (await rpc_call(node, "eth_call", params, timeout, proxy)).map(_hex_str_to_int)
 
 
 async def erc20_name(node: str, token: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str]:
+    """Return the name of an ERC-20 token."""
     params = [{"to": token, "data": "0x06fdde03"}, "latest"]
     return (await rpc_call(node, "eth_call", params, timeout, proxy)).map(_normalize_str)
 
 
 async def erc20_symbol(node: str, token: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str]:
+    """Return the symbol of an ERC-20 token."""
     params = [{"to": token, "data": "0x95d89b41"}, "latest"]
     return (await rpc_call(node, "eth_call", params, timeout, proxy)).map(_normalize_str)
 
 
 async def erc20_decimals(node: str, token: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    """Return the number of decimals for an ERC-20 token."""
     params = [{"to": token, "data": "0x313ce567"}, "latest"]
     res = await rpc_call(node, "eth_call", params, timeout, proxy)
     if res.is_err():
@@ -195,6 +213,7 @@ async def erc20_decimals(node: str, token: str, timeout: float = TIMEOUT, proxy:
 
 
 async def ens_name(node: str, address: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[str | None]:
+    """Perform reverse ENS resolution for an address, returning the ENS name or None."""
     ens_registry_address: str = "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e"
     func_selector_resolver: str = "0x0178b8bf"  # resolver(bytes32)
     func_selector_name: str = "0x691f3431"  # name(bytes32)
@@ -247,22 +266,24 @@ async def ens_name(node: str, address: str, timeout: float = TIMEOUT, proxy: str
 
 
 async def get_base_fee_per_gas(node: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    """Return the base fee per gas from the latest block."""
     res = await eth_get_block_by_number(node, "latest", False, timeout=timeout, proxy=proxy)
     if res.is_err():
-        return Result.err(res.unwrap_err(), res.extra)
+        return Result.err(res.unwrap_err(), res.context)
     if "baseFeePerGas" in res.unwrap():
         return res.with_value(int(res.unwrap()["baseFeePerGas"], 16))
-    return Result.err("no_base_fee_per_gas", res.extra)
+    return Result.err("no_base_fee_per_gas", res.context)
 
 
 async def get_tx_status(node: str, tx_hash: str, timeout: float = TIMEOUT, proxy: str | None = None) -> Result[int]:
+    """Return the status field (0=fail, 1=success) from a transaction receipt."""
     res = await eth_get_transaction_receipt(node, tx_hash, timeout=timeout, proxy=proxy)
     if res.is_err():
-        return Result.err(res.unwrap_err(), res.extra)
+        return Result.err(res.unwrap_err(), res.context)
     status = res.unwrap().get("status")
     if status is None:
-        return Result.err("no_status", res.extra)
-    return Result.ok(status, res.extra)
+        return Result.err("no_status", res.context)
+    return Result.ok(status, res.context)
 
 
 # -- end other --
@@ -271,8 +292,10 @@ async def get_tx_status(node: str, tx_hash: str, timeout: float = TIMEOUT, proxy
 
 
 def _hex_str_to_int(value: str) -> int:
+    """Convert a hex string to an integer."""
     return int(value, 16)
 
 
 def _normalize_str(value: str) -> str:
+    """Decode a hex string to text and filter out non-printable characters."""
     return "".join(filter(lambda x: x in string.printable, eth_utils.to_text(hexstr=value))).strip()

@@ -1,7 +1,9 @@
+"""CLI command: deploy a smart contract."""
+
 from typing import cast
 
-import mm_print
 import tomlkit
+from mm_print import print_json
 from mm_web3 import Web3CliConfig
 from pydantic import StrictStr
 
@@ -10,6 +12,8 @@ from mm_eth.cli.cli_utils import BaseConfigParams
 
 
 class Config(Web3CliConfig):
+    """Configuration for the deploy command."""
+
     private_key: StrictStr
     nonce: int | None = None
     gas: int
@@ -24,10 +28,13 @@ class Config(Web3CliConfig):
 
 
 class DeployCmdParams(BaseConfigParams):
+    """Parameters for the deploy command."""
+
     broadcast: bool = False
 
 
 async def run(cli_params: DeployCmdParams) -> None:
+    """Read deploy config, build contract data, and print the deployment payload."""
     config = Config.read_toml_config_or_exit(cli_params.config_path)
     if cli_params.print_config:
         config.print_and_exit({"private_key"})
@@ -44,4 +51,4 @@ async def run(cli_params: DeployCmdParams) -> None:
         )
 
     res = deploy.get_deploy_contract_data(config.contract_bin, constructor_types, constructor_values)
-    mm_print.json(res)
+    print_json(res)

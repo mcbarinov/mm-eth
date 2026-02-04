@@ -1,3 +1,5 @@
+"""CLI command: transfer ETH or ERC-20 tokens."""
+
 import asyncio
 import sys
 import time
@@ -20,6 +22,8 @@ from mm_eth.converters import from_wei
 
 
 class Config(Web3CliConfig):
+    """Configuration for the transfer command."""
+
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
     chain_id: int
     transfers: Annotated[list[Transfer], BeforeValidator(Validators.eth_transfers())]
@@ -41,10 +45,12 @@ class Config(Web3CliConfig):
 
     @property
     def from_addresses(self) -> list[str]:
+        """Return the list of sender addresses from all transfers."""
         return [r.from_address for r in self.transfers]
 
     @model_validator(mode="after")
     def final_validator(self) -> Self:
+        """Validate private keys coverage, set default values, and check expression types."""
         if not self.private_keys.contains_all_addresses(self.from_addresses):
             raise ValueError("private keys are not set for all addresses")
 
@@ -69,6 +75,7 @@ class Config(Web3CliConfig):
         return self
 
     async def async_init(self) -> None:
+        """Fetch token decimals from the network if a token address is configured."""
         if self.token:
             self.token_decimals = (await retry.erc20_decimals(5, self.nodes, self.proxies, token=self.token)).unwrap(
                 "can't get token decimals"
@@ -76,6 +83,8 @@ class Config(Web3CliConfig):
 
 
 class TransferCmdParams(BaseConfigParams):
+    """Parameters for the transfer command."""
+
     print_balances: bool
     print_transfers: bool
     debug: bool
@@ -84,6 +93,7 @@ class TransferCmdParams(BaseConfigParams):
 
 
 async def run(params: TransferCmdParams) -> None:
+    """Read config and execute transfers, or print balances/transfers for inspection."""
     config = await Config.read_toml_config_or_exit_async(params.config_path)
     await config.async_init()
     if params.print_config:
@@ -103,6 +113,7 @@ async def run(params: TransferCmdParams) -> None:
 
 
 async def _run_transfers(config: Config, cmd_params: TransferCmdParams) -> None:
+    """Execute all configured transfers sequentially with optional delays."""
     init_loguru(cmd_params.debug, config.log_debug, config.log_info)
     logger.info(f"transfer {cmd_params.config_path}: started at {utc_now()} UTC")
     logger.debug(f"config={config.model_dump(exclude={'private_keys'}) | {'version': cli_utils.get_version()}}")
@@ -117,6 +128,7 @@ async def _run_transfers(config: Config, cmd_params: TransferCmdParams) -> None:
 
 
 async def _get_nonce(t: Transfer, config: Config) -> int | None:
+    """Fetch the nonce for the transfer's sender address."""
     res = await retry.eth_get_transaction_count(5, config.nodes, config.proxies, address=t.from_address)
     if res.is_err():
         logger.error(f"{t.log_prefix}: nonce error: {res.unwrap_err()}")
@@ -126,6 +138,7 @@ async def _get_nonce(t: Transfer, config: Config) -> int | None:
 
 
 async def _calc_max_fee(t: Transfer, config: Config) -> int | None:
+    """Calculate the max fee, fetching base_fee from the network if needed."""
     if "base_fee" in config.max_fee.lower():
         base_fee_res = await retry.get_base_fee_per_gas(5, config.nodes, config.proxies)
         if base_fee_res.is_err():
@@ -137,6 +150,7 @@ async def _calc_max_fee(t: Transfer, config: Config) -> int | None:
 
 
 def check_max_fee_limit(t: Transfer, config: Config, max_fee: int) -> bool:
+    """Return False if max_fee exceeds the configured limit."""
     if config.max_fee_limit:
         max_fee_limit = calcs.calc_eth_expression(config.max_fee_limit)
         if max_fee > max_fee_limit:
@@ -148,6 +162,7 @@ def check_max_fee_limit(t: Transfer, config: Config, max_fee: int) -> bool:
 
 
 async def _calc_gas(t: Transfer, config: Config) -> int | None:
+    """Calculate the gas limit, optionally using on-chain estimation."""
     variables: dict[str, int] | None = None
     if "estimate" in config.gas.lower():
         if config.token:
@@ -172,6 +187,7 @@ async def _calc_gas(t: Transfer, config: Config) -> int | None:
 
 
 async def _calc_eth_value(t: Transfer, max_fee: int, gas: int, config: Config) -> int | None:
+    """Calculate the ETH transfer value, subtracting gas costs if using balance."""
     value_expression = t.value.lower()
     variables: dict[str, int] | None = None
     if "balance" in value_expression:
@@ -189,6 +205,7 @@ async def _calc_eth_value(t: Transfer, max_fee: int, gas: int, config: Config) -
 
 
 async def _calc_token_value(t: Transfer, config: Config) -> int | None:
+    """Calculate the ERC-20 token transfer value from a value expression."""
     value_expression = t.value.lower()
     variables: dict[str, int] | None = None
     if "balance" in value_expression:
@@ -202,13 +219,14 @@ async def _calc_token_value(t: Transfer, config: Config) -> int | None:
 
 
 async def _calc_value(t: Transfer, max_fee: int, gas: int, config: Config) -> int | None:
+    """Calculate the transfer value, dispatching to ETH or token calculation."""
     if config.token:
         return await _calc_token_value(t, config)
     return await _calc_eth_value(t, max_fee, gas, config)
 
 
 def _check_value_min_limit(t: Transfer, value: int, config: Config) -> bool:
-    """Returns False if the transfer should be skipped."""
+    """Return False if the transfer should be skipped."""
     if config.value_min_limit:
         if config.token:
             value_min_limit = calcs.calc_token_expression(config.value_min_limit, config.token_decimals)
@@ -220,6 +238,7 @@ def _check_value_min_limit(t: Transfer, value: int, config: Config) -> bool:
 
 
 async def _transfer(t: Transfer, config: Config, cmd_params: TransferCmdParams) -> None:
+    """Execute a single transfer: calculate params, sign, send, and wait for receipt."""
     nonce = await _get_nonce(t, config)
     if nonce is None:
         return
@@ -268,6 +287,7 @@ async def _transfer(t: Transfer, config: Config, cmd_params: TransferCmdParams) 
 
 
 async def wait_tx_status(t: Transfer, tx_hash: str, config: Config) -> Literal["OK", "FAIL", "TIMEOUT"]:
+    """Poll for a transaction receipt until success, failure, or timeout."""
     logger.debug(f"{t.log_prefix}: waiting for receipt, tx_hash={tx_hash}")
     started_at = time.perf_counter()
     count = 0
@@ -286,6 +306,7 @@ async def wait_tx_status(t: Transfer, tx_hash: str, config: Config) -> Literal["
 async def _send_tx(
     *, transfer: Transfer, nonce: int, max_fee: int, priority_fee: int, gas: int, value: int, config: Config
 ) -> str | None:
+    """Sign and broadcast a transaction, returning the tx hash or None on failure."""
     debug_tx_params = {
         "nonce": nonce,
         "max_fee": max_fee,
@@ -330,6 +351,7 @@ async def _send_tx(
 
 
 def _print_transfers(config: Config) -> None:
+    """Print the configured transfers as a table."""
     table = Table("n", "from_address", "to_address", "value", title="transfers")
     for count, transfer in enumerate(config.transfers, start=1):
         table.add_row(str(count), transfer.from_address, transfer.to_address, transfer.value)
@@ -338,6 +360,7 @@ def _print_transfers(config: Config) -> None:
 
 
 async def _print_balances(config: Config) -> None:
+    """Fetch and print ETH (and token) balances for all transfer routes."""
     if config.token:
         headers = ["n", "from_address", "nonce", "eth", "t", "to_address", "nonce", "eth", "t"]
     else:
@@ -414,6 +437,7 @@ async def _print_balances(config: Config) -> None:
 
 
 def _value_with_suffix(value: int, config: Config) -> str:
+    """Format a value with its unit suffix (eth or t) for display."""
     if config.token:
         return f"{from_wei(value, 't', config.round_ndigits, decimals=config.token_decimals)}t"
     return f"{from_wei(value, 'eth', config.round_ndigits)}eth"

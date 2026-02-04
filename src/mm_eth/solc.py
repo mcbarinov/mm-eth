@@ -1,3 +1,5 @@
+"""Solidity compiler (solc) wrapper."""
+
 import random
 import re
 import shutil
@@ -10,11 +12,14 @@ from mm_result import Result
 
 @dataclass
 class SolcResult:
+    """Compilation output containing contract binary and ABI."""
+
     bin: str
     abi: str
 
 
 def solc(contract_name: str, contract_path: Path, tmp_dir: Path) -> Result[SolcResult]:
+    """Compile a Solidity contract using the solc CLI and return the binary and ABI."""
     # Sanitize contract name to avoid unsafe characters in directory name
     safe_name = re.sub(r"[^a-zA-Z0-9_\-]", "_", contract_name)
 

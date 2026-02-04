@@ -1,12 +1,15 @@
+"""CLI command: generate or derive accounts from a mnemonic."""
+
 from pathlib import Path
 from typing import Any
 
-import mm_print
+from mm_print import print_json
 
 from mm_eth.account import derive_accounts, generate_mnemonic
 
 
 def run(mnemonic: str, passphrase: str, words: int, derivation_path: str, limit: int, print_path: bool, save_file: str) -> None:  # nosec
+    """Generate a mnemonic (if not provided) and derive accounts from it."""
     result: dict[str, Any] = {}
     if not mnemonic:
         mnemonic = generate_mnemonic(num_words=words)
@@ -19,7 +22,7 @@ def run(mnemonic: str, passphrase: str, words: int, derivation_path: str, limit:
         if print_path:
             new_account["path"] = acc.path
         result["accounts"].append(new_account)
-    mm_print.json(result)
+    print_json(result)
 
     if save_file:
         data = [acc["address"] + "\t" + acc["private"] for acc in result["accounts"]]

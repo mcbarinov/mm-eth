@@ -1,3 +1,5 @@
+"""ERC-20 token transfer encoding and signing."""
+
 import eth_abi
 import eth_utils
 from eth_typing import HexStr
@@ -10,6 +12,7 @@ TRANSFER_TOPIC = HexStr("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55
 
 
 def encode_transfer_input_data(recipient: str, value: int) -> str:
+    """Encode ERC-20 transfer(address,uint256) call data."""
     recipient = eth_utils.to_checksum_address(recipient)
     input_data = eth_utils.to_bytes(hexstr=HexStr(TRANSFER_METHOD)) + eth_abi.encode(["address", "uint256"], [recipient, value])
     return eth_utils.to_hex(input_data)
@@ -27,6 +30,7 @@ def sign_transfer_tx(
     private_key: str,
     chain_id: int,
 ) -> SignedTx:
+    """Sign an ERC-20 transfer transaction (EIP-1559)."""
     input_data = encode_transfer_input_data(recipient_address, value)
     return tx.sign_tx(
         nonce=nonce,

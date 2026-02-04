@@ -1,3 +1,5 @@
+"""ABI encoding, decoding, and function signature utilities."""
+
 import string
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -13,16 +15,21 @@ from web3.auto import w3
 
 @dataclass
 class NameTypeValue:
+    """A named, typed ABI parameter value."""
+
     name: str
     type: str
     value: Any
 
 
 class FunctionInput(BaseModel):
+    """Decoded function input with ABI metadata and parameter values."""
+
     function_abi: ABIFunction
     params: dict[str, Any]
 
     def decode_params_bytes(self) -> dict[str, Any]:
+        """Convert bytes parameters to human-readable hex or text strings."""
         result: dict[str, Any] = {}
         for k, v in self.params.items():
             if isinstance(v, bytes):
@@ -36,10 +43,12 @@ class FunctionInput(BaseModel):
         return result
 
     def function_signature(self) -> str:
+        """Return the function signature string, e.g. 'transfer(to,value)'."""
         inputs = [i["name"] for i in self.function_abi["inputs"]]
         return self.function_abi["name"] + f"({','.join(inputs)})"
 
     def to_list(self, decode_bytes: bool = False) -> list[NameTypeValue]:
+        """Convert parameters to a list of NameTypeValue, optionally decoding bytes."""
         result = []
         for param in self.function_abi["inputs"]:
             name = param["name"]
@@ -55,12 +64,14 @@ class FunctionInput(BaseModel):
 
 
 def decode_function_input(contract_abi: ABI, tx_input: str) -> FunctionInput:
+    """Decode a transaction input hex string using the contract ABI."""
     contract = w3.eth.contract(abi=contract_abi)
     func, params = contract.decode_function_input(HexStr(tx_input))
     return FunctionInput(function_abi=func.abi, params=params)
 
 
 def get_function_abi(contr_abi: ABI, fn_name: str) -> ABIFunction:
+    """Find and return the ABI entry for a function by name."""
     abi = next((x for x in contr_abi if x.get("name", None) == fn_name and x.get("type", None) == "function"), None)
     if not abi:
         raise ValueError("can't find abi for function: " + fn_name)
@@ -68,6 +79,7 @@ def get_function_abi(contr_abi: ABI, fn_name: str) -> ABIFunction:
 
 
 def encode_function_input_by_abi(abi: ABI | ABIFunction, fn_name: str, args: list[Any]) -> HexStr:
+    """Encode function call data using a contract ABI or function ABI."""
     # if abi is contract_abi, get function_abi
     if isinstance(abi, Sequence):
         abi = get_function_abi(abi, fn_name)
@@ -85,6 +97,7 @@ def encode_function_input_by_abi(abi: ABI | ABIFunction, fn_name: str, args: lis
 
 
 def encode_function_input_by_signature(func_signature: str, args: list[Any]) -> HexStr:
+    """Encode function call data from a signature string like 'func1(uint256,address)'."""
     if not func_signature.endswith(")"):
         raise ValueError(f"wrong func_signature={func_signature}. example: func1(uint256,address)")
     func_signature = func_signature.removesuffix(")")
@@ -102,20 +115,22 @@ def encode_function_input_by_signature(func_signature: str, args: list[Any]) -> 
 
 
 def encode_function_signature(func_name_with_types: str) -> HexStr:
-    """input example 'transfer(address,uint256)'"""
+    """Encode a 4-byte function selector from a function signature like 'transfer(address,uint256)'."""
     return HexStr(eth_utils.to_hex(Web3.keccak(text=func_name_with_types))[0:10])
 
 
 def decode_data(types: list[str], data: str) -> tuple[Any, ...]:
+    """Decode ABI-encoded hex data into a tuple of values."""
     return eth_abi.decode(types, eth_utils.to_bytes(hexstr=HexStr(data)))
 
 
 def encode_data(types: list[str], args: list[Any]) -> str:
+    """ABI-encodes values into a hex string."""
     return eth_utils.to_hex(eth_abi.encode(types, args))
 
 
 def parse_function_signatures(contract_abi: ABI) -> dict[str, str]:
-    """returns dict, key: function_name_and_types, value: 4bytes signature"""
+    """Return dict, key: function_name_and_types, value: 4bytes signature."""
     result: dict[str, str] = {}
     for item in contract_abi:
         if item.get("type", None) == "function":

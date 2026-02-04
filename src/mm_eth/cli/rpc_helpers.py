@@ -1,3 +1,5 @@
+"""RPC helper functions with logging for CLI commands."""
+
 import logging
 
 from mm_web3 import Nodes, Proxies
@@ -11,6 +13,7 @@ logger = logging.getLogger(__name__)
 async def get_nonce_with_logging(
     log_prefix: str | None, retries: int, nodes: Nodes, proxies: Proxies, *, address: str
 ) -> int | None:
+    """Fetch the nonce for an address, logging errors and debug info."""
     res = await retry.eth_get_transaction_count(retries, nodes, proxies, address=address)
     prefix = log_prefix or address
     if res.is_err():
@@ -21,6 +24,7 @@ async def get_nonce_with_logging(
 
 
 async def get_base_fee_with_logging(log_prefix: str | None, retries: int, nodes: Nodes, proxies: Proxies) -> int | None:
+    """Fetch the base fee, logging errors and debug info."""
     prefix = get_log_prefix(log_prefix)
     res = await retry.get_base_fee_per_gas(retries, nodes, proxies)
     if res.is_err():
@@ -34,6 +38,7 @@ async def get_base_fee_with_logging(log_prefix: str | None, retries: int, nodes:
 async def calc_max_fee_with_logging(
     log_prefix: str | None, retries: int, nodes: Nodes, proxies: Proxies, *, max_fee_expression: str
 ) -> int | None:
+    """Evaluate a max fee expression, fetching base_fee from the network if needed."""
     if "base_fee" in max_fee_expression.lower():
         base_fee = await get_base_fee_with_logging(log_prefix, retries, nodes, proxies)
         if base_fee is None:
@@ -44,6 +49,7 @@ async def calc_max_fee_with_logging(
 
 
 def get_log_prefix(log_prefix: str | None) -> str:
+    """Format a log prefix string, appending ': ' if non-empty."""
     prefix = log_prefix or ""
     if prefix:
         prefix += ": "

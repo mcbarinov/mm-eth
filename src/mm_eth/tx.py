@@ -1,3 +1,5 @@
+"""Ethereum transaction signing, encoding, and decoding."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -12,11 +14,15 @@ from web3 import Web3
 
 
 class SignedTx(BaseModel):
+    """A signed transaction with its hash and raw encoded form."""
+
     tx_hash: str
     raw_tx: str
 
 
 class RPLTransaction(rlp.Serializable):  # type: ignore[misc]
+    """RLP-serializable legacy Ethereum transaction."""
+
     fields = [  # noqa: RUF012
         ("nonce", big_endian_int),
         ("gas_price", big_endian_int),
@@ -42,6 +48,7 @@ class RPLTransaction(rlp.Serializable):  # type: ignore[misc]
         value: int | None = None,
         to: str | None = None,
     ) -> RPLTransaction:
+        """Create an RPLTransaction from individual field values."""
         if to:
             to = eth_utils.to_bytes(hexstr=HexStr(to))  # type:ignore[assignment]
         if data:
@@ -52,6 +59,8 @@ class RPLTransaction(rlp.Serializable):  # type: ignore[misc]
 
 
 class DecodedRawTx(BaseModel):
+    """Decoded fields from a raw legacy transaction."""
+
     tx_hash: str
     from_: str
     to: str | None
@@ -78,6 +87,7 @@ def encode_raw_tx_with_signature(
     value: int | None = None,
     to: str | None = None,
 ) -> str:
+    """RLP-encodes a legacy transaction with its signature into a raw hex string."""
     tx = RPLTransaction.new_tx(nonce=nonce, gas_price=gas_price, gas=gas, v=v, r=r, s=s, data=data, value=value, to=to)
     return Web3.to_hex(rlp.encode(tx))
 
@@ -93,6 +103,7 @@ def sign_legacy_tx(
     value: int | None = None,
     to: str | None = None,
 ) -> SignedTx:
+    """Signs a legacy (type 0) Ethereum transaction."""
     tx: dict[str, Any] = {"gas": gas, "gasPrice": gas_price, "nonce": nonce, "chainId": chain_id}
     if to:
         tx["to"] = Web3.to_checksum_address(to)
@@ -117,6 +128,7 @@ def sign_tx(
     value: int | None = None,
     to: str | None = None,
 ) -> SignedTx:
+    """Signs an EIP-1559 (type 2) Ethereum transaction."""
     tx: dict[str, Any] = {
         "type": "0x2",
         "gas": gas,
@@ -137,6 +149,7 @@ def sign_tx(
 
 
 def decode_raw_tx(raw_tx: str) -> DecodedRawTx:
+    """Decode a raw legacy transaction hex string into its component fields."""
     tx: Any = rlp.decode(eth_utils.to_bytes(hexstr=HexStr(raw_tx)), RPLTransaction)
     tx_hash = Web3.to_hex(eth_utils.keccak(eth_utils.to_bytes(hexstr=HexStr(raw_tx))))
     from_ = Account.recover_transaction(raw_tx)
