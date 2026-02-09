@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Annotated
 
-from mm_web3 import Web3CliConfig
+from mm_clikit import TomlConfig
 from pydantic import BeforeValidator
 from rich.live import Live
 from rich.table import Table
@@ -13,7 +13,7 @@ from mm_eth.cli.cli_utils import BaseConfigParams, fatal
 from mm_eth.cli.validators import Validators
 
 
-class Config(Web3CliConfig):
+class Config(TomlConfig):
     """Configuration for the balances command."""
 
     addresses: Annotated[list[str], BeforeValidator(Validators.eth_addresses(unique=True))]
@@ -40,7 +40,7 @@ class BalancesCmdParams(BaseConfigParams):
 
 async def run(params: BalancesCmdParams) -> None:
     """Read config, fetch balances for all addresses/tokens, and display a table."""
-    config = Config.read_toml_config_or_exit(params.config_path)
+    config = Config.load_or_exit(params.config_path)
     if params.print_config:
         config.print_and_exit()
 

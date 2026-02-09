@@ -1,12 +1,11 @@
 """Main CLI application and command definitions."""
 
 import asyncio
-import importlib.metadata
 from pathlib import Path
 from typing import Annotated
 
 import typer
-from mm_print import print_plain
+from mm_clikit import TyperPlus
 
 from mm_eth.account import DEFAULT_DERIVATION_PATH
 from mm_eth.cli.cli_utils import PrintFormat
@@ -16,7 +15,7 @@ from mm_eth.cli.cmd.deploy_cmd import DeployCmdParams
 from mm_eth.cli.cmd.transfer_cmd import TransferCmdParams
 from mm_eth.cli.cmd.wallet import mnemonic_cmd, private_key_cmd
 
-app = typer.Typer(no_args_is_help=True, pretty_exceptions_enable=False, add_completion=False)
+app = TyperPlus(package_name="mm-eth", no_args_is_help=True, pretty_exceptions_enable=False, add_completion=False)
 
 wallet_app = typer.Typer(no_args_is_help=True, help="Wallet commands: generate mnemonic, private to address")
 app.add_typer(wallet_app, name="wallet")
@@ -131,18 +130,6 @@ def transfer_command(
             )
         )
     )
-
-
-def version_callback(value: bool) -> None:
-    """Print the version and exit when --version is passed."""
-    if value:
-        print_plain(f"mm-eth: {importlib.metadata.version('mm-eth')}")
-        raise typer.Exit
-
-
-@app.callback()
-def main(_version: bool = typer.Option(None, "--version", callback=version_callback, is_eager=True)) -> None:
-    """CLI entry point for mm-eth."""
 
 
 if __name__ == "__main_":

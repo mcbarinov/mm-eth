@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from mm_print import print_json, print_plain
+from mm_clikit import print_json, print_plain
 
 from mm_eth.cli.cli import PrintFormat
 from mm_eth.cli.cli_utils import fatal

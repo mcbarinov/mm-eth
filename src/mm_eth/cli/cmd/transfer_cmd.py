@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import Annotated, Literal, Self, cast
 
 from loguru import logger
-from mm_std import utc_now
-from mm_web3 import PrivateKeyMap, Transfer, Web3CliConfig, calc_decimal_expression, init_loguru
+from mm_clikit import TomlConfig
+from mm_std import utc
+from mm_web3 import PrivateKeyMap, Transfer, calc_decimal_expression, init_loguru
 from pydantic import AfterValidator, BeforeValidator, Field, model_validator
 from rich.console import Console
 from rich.live import Live
@@ -21,7 +22,7 @@ from mm_eth.cli.validators import Validators
 from mm_eth.converters import from_wei
 
 
-class Config(Web3CliConfig):
+class Config(TomlConfig):
     """Configuration for the transfer command."""
 
     nodes: Annotated[list[str], BeforeValidator(Validators.nodes())]
@@ -94,7 +95,7 @@ class TransferCmdParams(BaseConfigParams):
 
 async def run(params: TransferCmdParams) -> None:
     """Read config and execute transfers, or print balances/transfers for inspection."""
-    config = await Config.read_toml_config_or_exit_async(params.config_path)
+    config = Config.load_or_exit(params.config_path)
     await config.async_init()
     if params.print_config:
         config.print_and_exit(exclude={"private_keys"})
@@ -115,7 +116,7 @@ async def run(params: TransferCmdParams) -> None:
 async def _run_transfers(config: Config, cmd_params: TransferCmdParams) -> None:
     """Execute all configured transfers sequentially with optional delays."""
     init_loguru(cmd_params.debug, config.log_debug, config.log_info)
-    logger.info(f"transfer {cmd_params.config_path}: started at {utc_now()} UTC")
+    logger.info(f"transfer {cmd_params.config_path}: started at {utc()} UTC")
     logger.debug(f"config={config.model_dump(exclude={'private_keys'}) | {'version': cli_utils.get_version()}}")
     for i, transfer in enumerate(config.transfers):
         await _transfer(transfer, config, cmd_params)
@@ -124,7 +125,7 @@ async def _run_transfers(config: Config, cmd_params: TransferCmdParams) -> None:
             logger.info(f"delay {delay_value} seconds")
             if not cmd_params.emulate:
                 await asyncio.sleep(float(delay_value))
-    logger.info(f"finished at {utc_now()} UTC")
+    logger.info(f"finished at {utc()} UTC")
 
 
 async def _get_nonce(t: Transfer, config: Config) -> int | None:

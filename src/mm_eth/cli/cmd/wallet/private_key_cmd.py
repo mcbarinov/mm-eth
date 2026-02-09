@@ -1,6 +1,6 @@
 """CLI command: derive address from a private key."""
 
-from mm_print import print_plain
+from mm_clikit import print_plain
 
 from mm_eth import account
 from mm_eth.cli.cli_utils import fatal

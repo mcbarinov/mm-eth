@@ -1,9 +1,9 @@
 [project]
 name = "mm-eth"
-version = "0.8.0"
+version = "0.8.1"
 description = ""
 requires-python = ">=3.14"
-dependencies = ["mm-web3~=0.6.2", "web3~=7.14.1", "typer~=0.21.1"]
+dependencies = ["mm-web3~=0.7.0", "mm-clikit~=0.0.3", "web3~=7.14.1"]
 [project.scripts]
 mm-eth = "mm_eth.cli.cli:app"
 

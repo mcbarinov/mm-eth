@@ -1,7 +1,7 @@
 """CLI command: print account balance."""
 
 import eth_utils
-from mm_print import print_json, print_plain
+from mm_clikit import print_json, print_plain
 
 from mm_eth import converters, rpc
 from mm_eth.cli import cli_utils

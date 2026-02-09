@@ -635,12 +635,29 @@ wheels = [
 ]
 
 [[package]]
+name = "mm-clikit"
+version = "0.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mm-result" },
+    { name = "mm-std" },
+    { name = "pydantic" },
+    { name = "rich" },
+    { name = "tomlkit" },
+    { name = "typer" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/14/c7/81e9b2ca1251b583e4f825a57dafd9b8370cdf63a67528af4de095be390f/mm_clikit-0.0.3.tar.gz", hash = "sha256:ad2fc437431727a785b30d381faaf01a972eddc009435c63fec6c5828cb68d18", size = 42351, upload-time = "2026-02-09T12:14:28.531Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/20/9af353077926019a2c49b87252247926730a5f9f6ce7c11c7c9f8b2113c7/mm_clikit-0.0.3-py3-none-any.whl", hash = "sha256:e4977d376a64c26369ebb18e97782234e75e2f78e6e001c389bf7bba1c6e505b", size = 5713, upload-time = "2026-02-09T12:14:29.815Z" },
+]
+
+[[package]]
 name = "mm-eth"
-version = "0.8.0"
+version = "0.8.1"
 source = { editable = "." }
 dependencies = [
+    { name = "mm-clikit" },
     { name = "mm-web3" },
-    { name = "typer" },
     { name = "web3" },
 ]
 
@@ -659,8 +676,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mm-web3", specifier = "~=0.6.2" },
-    { name = "typer", specifier = "~=0.21.1" },
+    { name = "mm-clikit", specifier = "~=0.0.3" },
+    { name = "mm-web3", specifier = "~=0.7.0" },
     { name = "web3", specifier = "~=7.14.1" },
 ]
 
@@ -695,20 +712,6 @@ wheels = [
 ]
 
 [[package]]
-name = "mm-print"
-version = "0.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "mm-std" },
-    { name = "rich" },
-    { name = "tomlkit" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/2a/a2/ca30dcf0fc19f31f924328df4a20f09bbcc4068f9f7623fa003bad2d9bb0/mm_print-0.3.0.tar.gz", hash = "sha256:9b9ddc362ad7f1ee3231e65dc9ec2ff3a535f9d922f330a4d73694a5eada7fa7", size = 31303, upload-time = "2026-01-23T11:26:35.413Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/db/737d1564f6f45fc920d899f029ca019a910383d7f17d086b4ab631fc6e52/mm_print-0.3.0-py3-none-any.whl", hash = "sha256:232adc794101374716d736c011a61c3dc7934e72384b096d57ebe89ddfd25de5", size = 2028, upload-time = "2026-01-23T11:26:34.375Z" },
-]
-
-[[package]]
 name = "mm-result"
 version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -728,17 +731,16 @@ wheels = [
 
 [[package]]
 name = "mm-web3"
-version = "0.6.2"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "loguru" },
     { name = "mm-http" },
-    { name = "mm-print" },
     { name = "mm-std" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0e/b6/03b72575a62384b0937e495f8492a48d18b7d9b21170b2bf2f0a1cb94f3a/mm_web3-0.6.2.tar.gz", hash = "sha256:c87adf1f3573bb01c617f25fbb1e4eac233a1d0b9001a94f488c0726f4dfa167", size = 89719, upload-time = "2026-02-04T08:29:10.277Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/08/ed/a4c5fbd59a566bb7d52c43df02d54244d739e704b4320263bc531576bdc4/mm_web3-0.7.0.tar.gz", hash = "sha256:533bf5cea2440e41249345a1b0cca009c6112c55e2eb81681e70935767f417a4", size = 85337, upload-time = "2026-02-09T12:06:04.47Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/7b/64b2dd1cce0d2709d0673ffdad4db94f71aa458e3af7e0fe13942eca26fc/mm_web3-0.6.2-py3-none-any.whl", hash = "sha256:8da304d3c6eb467edbd2de2560a8ffdbe5dff69894e3c9d9edbf72d9de55613a", size = 15337, upload-time = "2026-02-04T08:29:11.207Z" },
+    { url = "https://files.pythonhosted.org/packages/b3/58/d994cb5e33a81ee1885f49db7d3a9f2df3fe1b967d77e7788bc3a0967ab8/mm_web3-0.7.0-py3-none-any.whl", hash = "sha256:923a052e502efd7c4f482e94123820a972b58dd79275aa9300ae8284f6e1bba0", size = 13528, upload-time = "2026-02-09T12:06:05.372Z" },
 ]
 
 [[package]]
@@ -1304,15 +1306,15 @@ socks = [
 
 [[package]]
 name = "rich"
-version = "14.2.0"
+version = "14.3.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py" },
     { name = "pygments" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/d2/8920e102050a0de7bfabeb4c4614a49248cf8d5d7a8d01885fbb24dc767a/rich-14.2.0.tar.gz", hash = "sha256:73ff50c7c0c1c77c8243079283f4edb376f0f6442433aecb8ce7e6d0b92d1fe4", size = 219990, upload-time = "2025-10-09T14:16:53.064Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/99/a4cab2acbb884f80e558b0771e97e21e939c5dfb460f488d19df485e8298/rich-14.3.2.tar.gz", hash = "sha256:e712f11c1a562a11843306f5ed999475f09ac31ffb64281f73ab29ffdda8b3b8", size = 230143, upload-time = "2026-02-01T16:20:47.908Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/25/7a/b0178788f8dc6cafce37a212c99565fa1fe7872c70c6c9c1e1a372d9d88f/rich-14.2.0-py3-none-any.whl", hash = "sha256:76bc51fe2e57d2b1be1f96c524b890b816e334ab4c1e45888799bfaab0021edd", size = 243393, upload-time = "2025-10-09T14:16:51.245Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/45/615f5babd880b4bd7d405cc0dc348234c5ffb6ed1ea33e152ede08b2072d/rich-14.3.2-py3-none-any.whl", hash = "sha256:08e67c3e90884651da3239ea668222d19bea7b589149d8014a21c633420dbb69", size = 309963, upload-time = "2026-02-01T16:20:46.078Z" },
 ]
 
 [[package]]

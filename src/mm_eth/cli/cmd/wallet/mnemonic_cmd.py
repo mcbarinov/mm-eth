@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any
 
-from mm_print import print_json
+from mm_clikit import print_json
 
 from mm_eth.account import derive_accounts, generate_mnemonic
 

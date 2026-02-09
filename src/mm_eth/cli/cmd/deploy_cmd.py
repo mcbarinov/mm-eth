@@ -3,15 +3,14 @@
 from typing import cast
 
 import tomlkit
-from mm_print import print_json
-from mm_web3 import Web3CliConfig
+from mm_clikit import TomlConfig, print_json
 from pydantic import StrictStr
 
 from mm_eth import account, deploy, retry
 from mm_eth.cli.cli_utils import BaseConfigParams
 
 
-class Config(Web3CliConfig):
+class Config(TomlConfig):
     """Configuration for the deploy command."""
 
     private_key: StrictStr
@@ -35,9 +34,9 @@ class DeployCmdParams(BaseConfigParams):
 
 async def run(cli_params: DeployCmdParams) -> None:
     """Read deploy config, build contract data, and print the deployment payload."""
-    config = Config.read_toml_config_or_exit(cli_params.config_path)
+    config = Config.load_or_exit(cli_params.config_path)
     if cli_params.print_config:
-        config.print_and_exit({"private_key"})
+        config.print_and_exit(exclude={"private_key"})
 
     parsed = tomlkit.loads(f"constructor_types = {config.constructor_types}\nconstructor_values = {config.constructor_values}")
     constructor_types = cast(list[str], parsed["constructor_types"])

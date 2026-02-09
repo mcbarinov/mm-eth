@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import eth_utils
 import pydash
-from mm_print import print_json
+from mm_clikit import print_json
 from pydantic import BaseModel
 from rich.live import Live
 from rich.table import Table
